@@ -1,0 +1,13 @@
+django>=5.0,<6.0
+djangorestframework
+django-debug-toolbar
+django-allauth
+requests
+Pillow
+PyJWT
+cryptography
+razorpay
+gunicorn
+whitenoise
+dj-database-url
+psycopg2-binary

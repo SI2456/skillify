@@ -1,0 +1,676 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ tutor_user.get_full_name }} - Tutor Profile | Skillify</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/profile.css' %}">
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #f5f7fa; }
+        .profile-hero { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 60px 0 30px; color: #fff; }
+        .profile-avatar-lg {
+            width: 150px; height: 150px; border-radius: 50%; object-fit: cover;
+            border: 5px solid #fff; box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+        .trust-badge-lg {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: rgba(255,255,255,0.2); padding: 6px 16px; border-radius: 20px;
+            font-weight: 600; font-size: 0.95rem; backdrop-filter: blur(10px);
+        }
+        .stat-pill {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: rgba(255,255,255,0.15); padding: 8px 16px; border-radius: 25px;
+            font-size: 0.9rem; backdrop-filter: blur(10px);
+        }
+        .card { border: none; border-radius: 16px; box-shadow: 0 2px 15px rgba(0,0,0,0.06); margin-bottom: 20px; }
+        .section-title { font-weight: 700; font-size: 1.15rem; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+        .section-title i { color: #667eea; }
+        .skill-tag {
+            display: inline-block; padding: 8px 18px; border-radius: 25px;
+            background: linear-gradient(135deg, #667eea, #764ba2); color: #fff;
+            font-size: 0.85rem; font-weight: 500; margin: 4px;
+        }
+        .video-embed-container {
+            position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden;
+            border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .video-embed-container iframe {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; border-radius: 12px;
+        }
+        .video-link-card {
+            display: flex; align-items: center; gap: 15px; padding: 20px;
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef); border-radius: 12px;
+            text-decoration: none; color: inherit; transition: transform 0.2s;
+        }
+        .video-link-card:hover { transform: translateY(-2px); color: inherit; }
+        .video-link-icon { font-size: 2.5rem; color: #dc3545; }
+        .review-card {
+            border-left: 4px solid #667eea; padding: 16px; border-radius: 0 12px 12px 0;
+            background: #fafbfc; margin-bottom: 12px;
+        }
+        .review-avatar { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; }
+        .link-item {
+            display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+            border-radius: 10px; background: #f8f9fa; margin-bottom: 8px;
+            text-decoration: none; color: #333; transition: all 0.2s;
+        }
+        .link-item:hover { background: #e9ecef; color: #333; transform: translateX(4px); }
+        .link-item i { font-size: 1.3rem; }
+        .session-book-card {
+            border: 2px solid #e9ecef; border-radius: 12px; padding: 16px;
+            margin-bottom: 12px; transition: all 0.2s;
+        }
+        .session-book-card:hover { border-color: #667eea; box-shadow: 0 4px 15px rgba(102,126,234,0.15); }
+        .sticky-sidebar { position: sticky; top: 90px; }
+
+        /* Preply-style Calendar */
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+        }
+        .calendar-day { min-width: 0; }
+        .calendar-day-header {
+            text-align: center; padding: 6px 2px; margin-bottom: 4px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .calendar-day-header.today { border-bottom-color: #667eea; }
+        .calendar-day-header .day-name { display: block; font-size: 0.65rem; color: #6c757d; text-transform: uppercase; font-weight: 600; }
+        .calendar-day-header .day-num { display: block; font-size: 0.9rem; font-weight: 700; }
+        .calendar-day-header.today .day-num { color: #667eea; }
+        .calendar-slots { display: flex; flex-direction: column; gap: 3px; padding: 2px; }
+        .slot-btn {
+            background: none; border: 1.5px solid #667eea; color: #667eea;
+            border-radius: 6px; padding: 4px 2px; font-size: 0.72rem; font-weight: 600;
+            cursor: pointer; transition: all 0.2s; text-decoration: underline;
+        }
+        .slot-btn:hover { background: #667eea; color: #fff; transform: scale(1.05); }
+        .slot-btn.selected { background: #667eea; color: #fff; box-shadow: 0 2px 8px rgba(102,126,234,0.4); }
+        .slot-btn.booked { background: #e9ecef; color: #999; border-color: #e9ecef; text-decoration: line-through; cursor: not-allowed; }
+        .slot-btn.full { background: #fde8e8; color: #dc3545; border-color: #f5c6cb; cursor: not-allowed; opacity: 0.7; font-style: italic; text-decoration: line-through; }
+    </style>
+    <link rel="icon" type="image/svg+xml" href="{% static 'favicon.svg' %}">
+    <link rel="stylesheet" href="{% static 'css/dark-mode.css' %}
+    <link rel="stylesheet" href="{% static 'css/mobile.css' %}">">
+</head>
+<body>
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme"><i class="bi bi-moon-stars-fill"></i></button>
+
+    <nav class="navbar navbar-expand-lg navbar-light sticky-top" style="background:#fff;box-shadow:0 2px 10px rgba(0,0,0,0.08);">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'index' %}"><i class="bi bi-lightbulb-fill" style="color:#667eea;"></i><span class="fw-bold ms-1">Skillify</span></a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"><span class="navbar-toggler-icon"></span></button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item"><a class="nav-link" href="{% url 'dashboard' %}">Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'browse_skills' %}">Browse Skills</a></li>
+                    {% if user.is_authenticated %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <img src="{{ user.profile.avatar_url }}" alt="User" style="width:32px;height:32px;border-radius:50%;object-fit:cover;">
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="{% url 'edit_tutor_profile' %}"><i class="bi bi-pencil-square"></i> Edit Profile</a></li>
+                            <li><a class="dropdown-item" href="{% url 'wallet' %}"><i class="bi bi-wallet2"></i> Wallet</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="{% url 'logout' %}"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+                        </ul>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ===== PROFILE HERO ===== -->
+    <div class="profile-hero">
+        <div class="container">
+            <a href="{% url 'browse_skills' %}" class="text-white text-decoration-none mb-3 d-inline-block" style="opacity:0.8;">
+                <i class="bi bi-arrow-left"></i> Back to Browse
+            </a>
+            <div class="row align-items-center mt-3">
+                <div class="col-md-auto text-center text-md-start mb-3 mb-md-0">
+                    <img src="{{ profile.avatar_url }}" alt="{{ tutor_user.get_full_name }}" class="profile-avatar-lg">
+                </div>
+                <div class="col-md">
+                    <h1 class="fw-bold mb-1" style="font-size:2rem;">{{ tutor_user.get_full_name }}</h1>
+                    <p class="mb-3" style="opacity:0.9;font-size:1.1rem;">{{ profile.expertise|default:"Skillify Tutor" }}</p>
+                    <div class="d-flex flex-wrap gap-2 align-items-center">
+                        <span class="trust-badge-lg">
+                            <i class="bi bi-shield-check-fill"></i> Trust Score: {{ profile.trust_score|floatformat:0 }}
+                        </span>
+                        <span class="stat-pill">
+                            <i class="bi bi-star-fill text-warning"></i> {{ avg_rating }} ({{ review_count }} reviews)
+                        </span>
+                        {% if profile.show_experience and profile.experience_years > 0 %}
+                        <span class="stat-pill">
+                            <i class="bi bi-briefcase-fill"></i> {{ profile.experience_years }} yr{{ profile.experience_years|pluralize }} exp
+                        </span>
+                        {% endif %}
+                        <span class="stat-pill">
+                            <i class="bi bi-calendar-check"></i> {{ sessions.count }} upcoming
+                        </span>
+                    </div>
+                </div>
+                {% if user.is_authenticated and user.pk == tutor_user.pk %}
+                <div class="col-md-auto mt-3 mt-md-0">
+                    <a href="{% url 'edit_tutor_profile' %}" class="btn btn-light btn-lg">
+                        <i class="bi bi-pencil-square"></i> Edit My Profile
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== MAIN CONTENT ===== -->
+    <div class="container py-4" style="margin-top:-20px;">
+        <div class="row g-4">
+            <div class="col-lg-8">
+
+                <!-- ===== ABOUT ME ===== -->
+                <div class="card">
+                    <div class="card-body p-4">
+                        <h4 class="section-title"><i class="bi bi-person"></i> About Me</h4>
+                        <p class="mb-0" style="line-height:1.8;color:#555;">{{ profile.bio|default:"This tutor hasn't added a bio yet."|linebreaksbr }}</p>
+                    </div>
+                </div>
+
+                <!-- ===== EXPERIENCE & EDUCATION ===== -->
+                {% if profile.show_experience and profile.experience_years > 0 or profile.show_education and profile.education %}
+                <div class="card">
+                    <div class="card-body p-4">
+                        <h4 class="section-title"><i class="bi bi-mortarboard"></i> Background</h4>
+
+                        {% if profile.show_experience and profile.experience_years > 0 %}
+                        <div class="d-flex align-items-center gap-3 mb-3 p-3" style="background:linear-gradient(135deg,#667eea10,#764ba210);border-radius:12px;">
+                            <div style="width:50px;height:50px;background:linear-gradient(135deg,#667eea,#764ba2);border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                <i class="bi bi-briefcase-fill" style="color:#fff;font-size:1.3rem;"></i>
+                            </div>
+                            <div>
+                                <div class="fw-bold" style="font-size:1.1rem;">{{ profile.experience_years }} Year{{ profile.experience_years|pluralize }} of Experience</div>
+                                <small class="text-muted">Teaching & professional experience</small>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        {% if profile.show_education and profile.education %}
+                        <div class="mb-0">
+                            <h6 class="fw-bold mb-2"><i class="bi bi-book" style="color:#667eea;"></i> Education</h6>
+                            {% for line in profile.education.splitlines %}
+                                {% if line.strip %}
+                                <div class="d-flex align-items-start gap-2 mb-2">
+                                    <i class="bi bi-mortarboard-fill" style="color:#4ECDC4;margin-top:3px;"></i>
+                                    <span style="color:#555;">{{ line }}</span>
+                                </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- ===== DEMO VIDEO (EMBEDDED) ===== -->
+                {% if profile.demo_video %}
+                <div class="card">
+                    <div class="card-body p-4">
+                        <h4 class="section-title"><i class="bi bi-play-circle"></i> Demo Video</h4>
+                        <p class="text-muted small mb-3">Watch {{ tutor_user.first_name }}'s teaching style in action</p>
+
+                        {% if embed_video_url %}
+                        <!-- Embedded YouTube/Vimeo Player -->
+                        <div class="video-embed-container">
+                            <iframe src="{{ embed_video_url }}"
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                    allowfullscreen
+                                    title="{{ tutor_user.get_full_name }} Demo Video"></iframe>
+                        </div>
+                        {% else %}
+                        <!-- Fallback: External Link -->
+                        <a href="{{ profile.demo_video }}" target="_blank" class="video-link-card">
+                            <i class="bi bi-play-circle-fill video-link-icon"></i>
+                            <div>
+                                <strong class="d-block">Watch Demo Video</strong>
+                                <small class="text-muted">Opens in a new tab</small>
+                            </div>
+                            <i class="bi bi-box-arrow-up-right ms-auto" style="font-size:1.2rem;color:#667eea;"></i>
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- ===== SKILLS ===== -->
+                <div class="card">
+                    <div class="card-body p-4">
+                        <h4 class="section-title"><i class="bi bi-lightbulb"></i> Skills I Teach</h4>
+                        <div>
+                            {% for skill in profile.skills.all %}
+                            <span class="skill-tag">{{ skill.name }}</span>
+                            {% empty %}
+                            <p class="text-muted mb-0">No skills listed yet.</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===== PORTFOLIO LINKS ===== -->
+                {% if profile.linkedin or profile.github %}
+                <div class="card">
+                    <div class="card-body p-4">
+                        <h4 class="section-title"><i class="bi bi-link-45deg"></i> Portfolio Links</h4>
+                        {% if profile.linkedin %}
+                        <a href="{{ profile.linkedin }}" target="_blank" class="link-item">
+                            <i class="bi bi-linkedin text-primary"></i>
+                            <div>
+                                <strong>LinkedIn Profile</strong>
+                                <small class="d-block text-muted">View professional profile</small>
+                            </div>
+                            <i class="bi bi-box-arrow-up-right ms-auto"></i>
+                        </a>
+                        {% endif %}
+                        {% if profile.github %}
+                        <a href="{{ profile.github }}" target="_blank" class="link-item">
+                            <i class="bi bi-github"></i>
+                            <div>
+                                <strong>GitHub Profile</strong>
+                                <small class="d-block text-muted">View code repositories</small>
+                            </div>
+                            <i class="bi bi-box-arrow-up-right ms-auto"></i>
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- ===== REVIEWS ===== -->
+                <div class="card">
+                    <div class="card-body p-4">
+                        <h4 class="section-title"><i class="bi bi-chat-square-text"></i> Reviews & Ratings</h4>
+
+                        {% if review_count > 0 %}
+                        <!-- Rating Summary with Breakdown -->
+                        <div class="row align-items-center mb-4 p-3" style="background:#fff9e6;border-radius:12px;">
+                            <div class="col-4 text-center">
+                                <h1 class="text-warning fw-bold mb-0" style="font-size:3rem;">{{ avg_rating }}</h1>
+                                <div class="mb-1">
+                                    {% for i in "12345" %}
+                                    <i class="bi bi-star{% if forloop.counter <= avg_rating %}-fill{% endif %} text-warning" style="font-size:1rem;"></i>
+                                    {% endfor %}
+                                </div>
+                                <small class="text-muted fw-bold">{{ review_count }} review{{ review_count|pluralize }}</small>
+                            </div>
+                            <div class="col-8">
+                                {% for bar in rating_breakdown %}
+                                <div class="d-flex align-items-center gap-2 mb-1">
+                                    <small class="text-muted" style="width:14px;">{{ bar.stars }}</small>
+                                    <i class="bi bi-star-fill text-warning" style="font-size:0.7rem;"></i>
+                                    <div class="flex-grow-1" style="height:8px;background:#e9ecef;border-radius:4px;overflow:hidden;">
+                                        <div style="height:100%;background:#ffc107;border-radius:4px;width:{{ bar.pct }}%;transition:width 0.5s;"></div>
+                                    </div>
+                                    <small class="text-muted" style="width:22px;font-size:0.7rem;">{{ bar.count }}</small>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Individual Reviews -->
+                        {% for review in reviews %}
+                        <div class="review-card" style="{% if not forloop.last %}border-bottom:1px solid #f0f0f0;padding-bottom:16px;margin-bottom:16px;{% endif %}">
+                            <div class="d-flex align-items-start mb-2">
+                                <img src="{{ review.reviewer.profile.avatar_url }}" alt="{{ review.reviewer.get_full_name }}" class="review-avatar me-3">
+                                <div class="flex-grow-1">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <strong style="font-size:0.95rem;">{{ review.reviewer.get_full_name }}</strong>
+                                        <small class="text-muted">{{ review.created_at|timesince }} ago</small>
+                                    </div>
+                                    <div class="mb-2">
+                                        {% for i in "12345" %}
+                                        <i class="bi bi-star{% if forloop.counter <= review.rating %}-fill{% endif %} text-warning" style="font-size:0.8rem;"></i>
+                                        {% endfor %}
+                                        <span class="ms-1" style="font-size:0.8rem;font-weight:600;color:{% if review.rating >= 4 %}#28a745{% elif review.rating >= 3 %}#ffc107{% else %}#dc3545{% endif %};">
+                                            {% if review.rating == 5 %}Excellent{% elif review.rating == 4 %}Good{% elif review.rating == 3 %}Average{% elif review.rating == 2 %}Below Average{% else %}Poor{% endif %}
+                                        </span>
+                                    </div>
+                                    {% if review.comment %}
+                                    <p class="mb-0" style="color:#555;font-size:0.9rem;line-height:1.6;">{{ review.comment }}</p>
+                                    {% else %}
+                                    <p class="mb-0 text-muted fst-italic" style="font-size:0.85rem;">No written review</p>
+                                    {% endif %}
+                                    <small class="text-muted d-block mt-1">
+                                        <i class="bi bi-book" style="font-size:0.7rem;"></i> {{ review.session.title }} · {{ review.session.skill.name }}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+
+                        {% else %}
+                        <div class="text-center py-4">
+                            <i class="bi bi-chat-square-text" style="font-size:2.5rem;color:#dee2e6;"></i>
+                            <p class="text-muted mt-2 mb-0">No reviews yet. Be the first to learn from {{ tutor_user.first_name }}!</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== RIGHT SIDEBAR ===== -->
+            <div class="col-lg-4">
+                <div class="sticky-sidebar">
+
+                    <!-- Quick Info Card -->
+                    <div class="card">
+                        <div class="card-body p-4 text-center">
+                            <img src="{{ profile.avatar_url }}" alt="{{ tutor_user.get_full_name }}" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid #4ECDC4;" class="mb-3">
+                            <h6 class="fw-bold mb-1">{{ tutor_user.get_full_name }}</h6>
+                            <p class="text-muted small mb-2">{{ profile.expertise|default:"Skillify Tutor" }}</p>
+
+                            <!-- Average Rating -->
+                            <div class="mb-3">
+                                <div style="font-size:2rem;font-weight:800;color:#F59E0B;">{{ avg_rating }}<small style="font-size:0.9rem;color:#999;">/5</small></div>
+                                <div>
+                                    {% for i in "12345" %}
+                                    <i class="bi bi-star{% if forloop.counter <= avg_rating %}-fill{% endif %}" style="color:#F59E0B;font-size:0.9rem;"></i>
+                                    {% endfor %}
+                                </div>
+                                <small class="text-muted">{{ review_count }} review{{ review_count|pluralize }}</small>
+                            </div>
+
+                            <!-- Trust Score -->
+                            <div class="mb-3 p-3" style="background:#f0faf0;border-radius:12px;">
+                                <div class="d-flex align-items-center justify-content-center gap-2 mb-1">
+                                    <i class="bi bi-shield-check-fill" style="color:#10B981;font-size:1.2rem;"></i>
+                                    <strong style="font-size:1.3rem;color:#10B981;">{{ profile.trust_score|floatformat:0 }}</strong>
+                                    <small class="text-muted">/100 Trust Score</small>
+                                </div>
+                                <div style="height:6px;background:#e2e8f0;border-radius:3px;overflow:hidden;">
+                                    <div style="height:100%;width:{{ profile.trust_score }}%;background:linear-gradient(90deg,#10B981,#4ECDC4);border-radius:3px;"></div>
+                                </div>
+                                <div class="d-flex justify-content-between mt-2" style="font-size:0.65rem;color:#999;">
+                                    <span>⭐ Rating</span>
+                                    <span>📚 {{ sessions_completed }} sessions</span>
+                                    <span>👥 {{ total_students }} students</span>
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-center gap-2 flex-wrap">
+                                {% if profile.profile_picture %}
+                                <span class="badge bg-info"><i class="bi bi-camera-fill"></i> Verified Photo</span>
+                                {% endif %}
+                                {% if profile.demo_video %}
+                                <span class="badge bg-danger"><i class="bi bi-play-fill"></i> Has Video</span>
+                                {% endif %}
+                                {% if profile.show_experience and profile.experience_years > 0 %}
+                                <span class="badge bg-primary"><i class="bi bi-briefcase"></i> {{ profile.experience_years }}yr exp</span>
+                                {% endif %}
+                                {% if profile.certificate %}
+                                <a href="{{ profile.certificate.url }}" target="_blank" class="badge bg-success text-decoration-none" style="cursor:pointer;">
+                                    <i class="bi bi-award-fill"></i> {{ profile.certificate_title|default:"Certified" }}
+                                </a>
+                                {% endif %}
+                            </div>
+
+                            {% if user.is_authenticated and user != tutor_user %}
+                            <div class="mt-3">
+                                <a href="{% url 'chat' tutor_user.pk %}" class="btn btn-outline-primary btn-sm w-100">
+                                    <i class="bi bi-chat-dots-fill"></i> Message {{ tutor_user.first_name }}
+                                </a>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-body p-4">
+                            <h5 class="fw-bold mb-3"><i class="bi bi-calendar-check" style="color:#667eea;"></i> Book a Session</h5>
+
+                            {% if skills_with_sessions %}
+                            <!-- Skill Tabs -->
+                            <ul class="nav nav-pills nav-fill mb-3" role="tablist" style="gap:4px;">
+                                {% for skill_name, data in skills_with_sessions.items %}
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link {% if forloop.first %}active{% endif %} px-2 py-1"
+                                            style="font-size:0.8rem;border-radius:20px;"
+                                            data-bs-toggle="pill"
+                                            data-bs-target="#skill-cal-{{ forloop.counter }}" type="button">
+                                        {{ skill_name }}
+                                    </button>
+                                </li>
+                                {% endfor %}
+                            </ul>
+
+                            <div class="tab-content">
+                                {% for skill_name, data in skills_with_sessions.items %}
+                                <div class="tab-pane fade {% if forloop.first %}show active{% endif %}" id="skill-cal-{{ forloop.counter }}">
+
+                                    <!-- Weekly Calendar Grid -->
+                                    <div class="calendar-grid">
+                                        {% for d in week_dates %}
+                                        <div class="calendar-day">
+                                            <div class="calendar-day-header {% if d == today %}today{% endif %}">
+                                                <span class="day-name">{{ d|date:"D" }}</span>
+                                                <span class="day-num">{{ d|date:"j" }}</span>
+                                            </div>
+                                            <div class="calendar-slots">
+                                                {% for session in sessions %}
+                                                    {% if session.date == d and session.skill.name == skill_name %}
+                                                    {% with booked_count=session.bookings.count %}
+                                                    {% if booked_count >= session.max_participants %}
+                                                    <button class="slot-btn full" disabled
+                                                            title="Session Full — {{ booked_count }}/{{ session.max_participants }} booked">
+                                                        {{ session.start_time|time:"H:i" }}
+                                                    </button>
+                                                    {% else %}
+                                                    <button class="slot-btn {% if session.pk in booked_ids %}booked{% endif %}"
+                                                            data-session-id="{{ session.pk }}"
+                                                            data-credits="{{ session.credits_required }}"
+                                                            data-title="{{ session.title }}"
+                                                            data-time="{{ session.start_time|time:'H:i' }} - {{ session.end_time|time:'H:i' }}"
+                                                            data-date="{{ session.date|date:'M d' }}"
+                                                            onclick="selectSlot(this)">
+                                                        {{ session.start_time|time:"H:i" }}
+                                                    </button>
+                                                    {% endif %}
+                                                    {% endwith %}
+                                                    {% endif %}
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+
+                            <!-- Booking Confirmation Panel (hidden until slot selected) -->
+                            <div id="bookingPanel" style="display:none;margin-top:16px;">
+                                <div style="background:linear-gradient(135deg,#667eea08,#764ba208);border:2px solid #667eea;border-radius:12px;padding:16px;">
+                                    <h6 class="fw-bold mb-2"><i class="bi bi-calendar-check-fill" style="color:#667eea;"></i> Selected Slot</h6>
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <small class="text-muted">Session:</small>
+                                        <strong id="bookTitle" style="font-size:0.85rem;"></strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <small class="text-muted">Date:</small>
+                                        <strong id="bookDate" style="font-size:0.85rem;"></strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <small class="text-muted">Time:</small>
+                                        <strong id="bookTime" style="font-size:0.85rem;"></strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <small class="text-muted">Cost:</small>
+                                        <strong id="bookCredits" style="font-size:0.85rem;color:#667eea;"></strong>
+                                    </div>
+                                    {% if user.is_authenticated and user != tutor_user %}
+                                    <button id="bookNowBtn" class="btn btn-primary w-100 fw-bold" onclick="bookSelectedSlot()">
+                                        <i class="bi bi-calendar-check-fill"></i> Book Now
+                                    </button>
+                                    {% elif not user.is_authenticated %}
+                                    <a href="{% url 'login' %}" class="btn btn-outline-primary w-100">
+                                        <i class="bi bi-box-arrow-in-right"></i> Login to Book
+                                    </a>
+                                    {% endif %}
+                                </div>
+                                <!-- Insufficient Credits Warning (hidden) -->
+                                <div id="insufficientPanel" style="display:none;margin-top:10px;">
+                                    <div class="alert alert-warning mb-0" style="border-radius:10px;">
+                                        <h6 class="fw-bold mb-1"><i class="bi bi-exclamation-triangle-fill"></i> Not Enough Credits</h6>
+                                        <p class="small mb-2">
+                                            You have <strong id="yourBalance">0</strong> credits but need <strong id="needCredits">0</strong>.
+                                            Top up <strong id="shortfall">0</strong> more credits.
+                                        </p>
+                                        <a href="{% url 'wallet' %}" class="btn btn-warning btn-sm w-100 fw-bold">
+                                            <i class="bi bi-wallet2"></i> Top Up Credits
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {% else %}
+                            <div class="text-center py-3">
+                                <i class="bi bi-calendar-x" style="font-size:2rem;color:#dee2e6;"></i>
+                                <p class="text-muted mt-2 mb-0 small">No upcoming sessions available</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="text-center py-4 mt-4" style="background:#f8f9fa;">
+        <p class="text-muted mb-0 small">&copy; 2025 Skillify. All rights reserved.</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{% static 'js/profile.js' %}"></script>
+    <script>
+    // ===== Preply-style Calendar Booking =====
+    let selectedSessionId = null;
+    let selectedBtn = null;
+    const csrfToken = '{{ csrf_token }}';
+
+    function selectSlot(btn) {
+        // Don't select if already booked
+        if (btn.classList.contains('booked')) return;
+
+        // Deselect previous
+        if (selectedBtn) selectedBtn.classList.remove('selected');
+
+        // Select new
+        btn.classList.add('selected');
+        selectedBtn = btn;
+        selectedSessionId = btn.dataset.sessionId;
+
+        // Show booking panel
+        document.getElementById('bookingPanel').style.display = 'block';
+        document.getElementById('insufficientPanel').style.display = 'none';
+        document.getElementById('bookTitle').textContent = btn.dataset.title;
+        document.getElementById('bookDate').textContent = btn.dataset.date;
+        document.getElementById('bookTime').textContent = btn.dataset.time;
+        document.getElementById('bookCredits').textContent = btn.dataset.credits + ' credits';
+
+        // Re-enable book button
+        const bookBtn = document.getElementById('bookNowBtn');
+        if (bookBtn) {
+            bookBtn.disabled = false;
+            bookBtn.innerHTML = '<i class="bi bi-calendar-check-fill"></i> Book Now';
+        }
+
+        // Smooth scroll to panel on mobile
+        document.getElementById('bookingPanel').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function bookSelectedSlot() {
+        if (!selectedSessionId) return;
+
+        const bookBtn = document.getElementById('bookNowBtn');
+        bookBtn.disabled = true;
+        bookBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Booking...';
+
+        fetch('/book/' + selectedSessionId + '/', {
+            method: 'GET',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                // Success — show confirmation
+                bookBtn.classList.remove('btn-primary');
+                bookBtn.classList.add('btn-success');
+                bookBtn.innerHTML = '<i class="bi bi-check-circle-fill"></i> Booked!';
+
+                // Mark slot as booked
+                if (selectedBtn) {
+                    selectedBtn.classList.remove('selected');
+                    selectedBtn.classList.add('booked');
+                    selectedBtn.style.textDecoration = 'line-through';
+                    selectedBtn.onclick = null;
+                }
+
+                // Flash success message
+                showToast('success', data.message || 'Session booked successfully!');
+            } else if (data.insufficient_credits) {
+                // Show insufficient credits panel
+                bookBtn.disabled = false;
+                bookBtn.innerHTML = '<i class="bi bi-calendar-check-fill"></i> Book Now';
+                document.getElementById('insufficientPanel').style.display = 'block';
+                document.getElementById('yourBalance').textContent = data.balance;
+                document.getElementById('needCredits').textContent = data.required;
+                document.getElementById('shortfall').textContent = data.shortfall;
+            } else if (data.already_booked) {
+                bookBtn.classList.remove('btn-primary');
+                bookBtn.classList.add('btn-info');
+                bookBtn.innerHTML = '<i class="bi bi-check"></i> Already Booked';
+                if (selectedBtn) {
+                    selectedBtn.classList.add('booked');
+                }
+            } else if (data.session_full) {
+                bookBtn.classList.remove('btn-primary');
+                bookBtn.classList.add('btn-danger');
+                bookBtn.innerHTML = '<i class="bi bi-x-circle"></i> Session Full';
+                bookBtn.disabled = true;
+                if (selectedBtn) {
+                    selectedBtn.classList.remove('selected');
+                    selectedBtn.classList.add('full');
+                    selectedBtn.disabled = true;
+                    selectedBtn.style.background = '#fde8e8';
+                    selectedBtn.style.color = '#dc3545';
+                    selectedBtn.style.borderColor = '#f5c6cb';
+                }
+            } else {
+                bookBtn.disabled = false;
+                bookBtn.innerHTML = '<i class="bi bi-calendar-check-fill"></i> Book Now';
+                showToast('error', data.error || 'Booking failed.');
+            }
+        })
+        .catch(() => {
+            bookBtn.disabled = false;
+            bookBtn.innerHTML = '<i class="bi bi-calendar-check-fill"></i> Book Now';
+            showToast('error', 'Network error. Please try again.');
+        });
+    }
+
+    function showToast(type, msg) {
+        const toast = document.createElement('div');
+        toast.style.cssText = 'position:fixed;top:20px;right:20px;z-index:9999;padding:14px 24px;border-radius:12px;font-weight:600;font-size:0.9rem;animation:fadeIn 0.3s ease;max-width:350px;';
+        toast.style.background = type === 'success' ? 'linear-gradient(135deg,#28a745,#20c997)' : 'linear-gradient(135deg,#dc3545,#c82333)';
+        toast.style.color = '#fff';
+        toast.style.boxShadow = '0 4px 20px rgba(0,0,0,0.2)';
+        toast.innerHTML = '<i class="bi bi-' + (type === 'success' ? 'check-circle' : 'exclamation-circle') + '-fill me-2"></i>' + msg;
+        document.body.appendChild(toast);
+        setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.3s'; setTimeout(() => toast.remove(), 300); }, 3000);
+    }
+    </script>
+    {% include "core/chatbot_widget.html" %}
+    <script src="{% static 'js/dark-mode.js' %}"></script>
+</body>
+</html>

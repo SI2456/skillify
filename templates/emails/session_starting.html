@@ -1,0 +1,37 @@
+{% extends "emails/base_email.html" %}
+{% block content %}
+<h2 style="margin:0 0 16px;color:#333;font-size:20px;">🎬 Session Starting Now!</h2>
+<p style="color:#555;font-size:15px;line-height:1.6;margin:0 0 20px;">
+    Hi <strong>{{ learner_name }}</strong>, your session is starting now! Join the meeting below.
+</p>
+
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#e8f5e9;border-radius:12px;padding:20px;margin-bottom:20px;border-left:4px solid #28a745;">
+    <tr><td style="padding:8px 16px;">
+        <table width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+                <td style="padding:6px 0;color:#888;font-size:13px;width:100px;">📚 Session</td>
+                <td style="padding:6px 0;color:#333;font-size:14px;font-weight:600;">{{ session_title }}</td>
+            </tr>
+            <tr>
+                <td style="padding:6px 0;color:#888;font-size:13px;">👨‍🏫 Tutor</td>
+                <td style="padding:6px 0;color:#333;font-size:14px;font-weight:600;">{{ tutor_name }}</td>
+            </tr>
+            <tr>
+                <td style="padding:6px 0;color:#888;font-size:13px;">🕐 Time</td>
+                <td style="padding:6px 0;color:#333;font-size:14px;font-weight:600;">{{ session_time }}</td>
+            </tr>
+        </table>
+    </td></tr>
+</table>
+
+{% if zoom_url %}
+<div style="text-align:center;margin:24px 0;">
+    <a href="{{ zoom_url }}" style="display:inline-block;background:#2D8CFF;color:#fff;text-decoration:none;padding:16px 44px;border-radius:12px;font-weight:700;font-size:16px;box-shadow:0 4px 15px rgba(45,140,255,0.4);">🎥 JOIN ZOOM MEETING</a>
+</div>
+{% if zoom_id %}
+<p style="text-align:center;color:#888;font-size:12px;margin:0;">Meeting ID: {{ zoom_id }} {% if zoom_pass %}| Password: {{ zoom_pass }}{% endif %}</p>
+{% endif %}
+{% endif %}
+
+<p style="color:#888;font-size:13px;margin:20px 0 0;">Enjoy your learning session! 📖 — The Skillify Team</p>
+{% endblock %}

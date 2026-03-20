@@ -1,0 +1,602 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Skillify</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/login_registration.css' %}">
+    <style>
+        .field-feedback {
+            font-size: 0.8rem;
+            margin-top: 6px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.3s;
+            min-height: 22px;
+        }
+        .field-feedback.error { color: #dc3545; }
+        .field-feedback.success { color: #28a745; }
+        .field-feedback.checking { color: #6c757d; }
+        .field-feedback i { font-size: 0.85rem; }
+
+        .form-control.is-valid-custom {
+            border-color: #28a745 !important;
+            box-shadow: 0 0 0 2px rgba(40,167,69,0.15) !important;
+        }
+        .form-control.is-invalid-custom {
+            border-color: #dc3545 !important;
+            box-shadow: 0 0 0 2px rgba(220,53,69,0.15) !important;
+        }
+
+        .strength-container {
+            margin-top: 8px;
+        }
+        .strength-bar {
+            height: 5px;
+            background: #e9ecef;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .strength-bar .fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.4s ease, background 0.4s ease;
+            width: 0%;
+        }
+        .strength-label {
+            font-size: 0.75rem;
+            margin-top: 4px;
+            font-weight: 600;
+            transition: color 0.3s;
+        }
+        .strength-checks {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 6px;
+        }
+        .strength-check {
+            font-size: 0.72rem;
+            padding: 2px 8px;
+            border-radius: 12px;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            color: #6c757d;
+            transition: all 0.3s;
+        }
+        .strength-check.pass {
+            background: #d4edda;
+            border-color: #28a745;
+            color: #155724;
+        }
+
+        .btn-block:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .success-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255,255,255,0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .success-icon {
+            width: 80px; height: 80px; border-radius: 50%;
+            background: linear-gradient(135deg, #4ECDC4, #3BABA3);
+            display: flex; align-items: center; justify-content: center;
+            margin-bottom: 20px; animation: scaleIn 0.4s ease;
+        }
+        @keyframes scaleIn { from { transform: scale(0); } to { transform: scale(1); } }
+        .success-icon i { font-size: 2.5rem; color: #fff; }
+
+        .spinner-submit {
+            display: none;
+            width: 20px; height: 20px;
+            border: 2px solid #fff;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            margin-right: 8px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .btn-loading .spinner-submit { display: inline-block; }
+        .btn-loading .btn-text { display: none; }
+    </style>
+    <link rel="icon" type="image/svg+xml" href="{% static 'favicon.svg' %}">
+    <link rel="stylesheet" href="{% static 'css/dark-mode.css' %}
+    <link rel="stylesheet" href="{% static 'css/mobile.css' %}">">
+</head>
+<body>
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+        <i class="bi bi-moon-stars-fill"></i>
+    </button>
+
+    <div class="auth-container">
+        <div class="container-fluid h-100">
+            <div class="row h-100">
+                <div class="col-lg-7 left-panel">
+                    <div class="branding-content">
+                        <a href="{% url 'index' %}" class="logo">
+                            <i class="bi bi-lightbulb-fill"></i>
+                            <span>Skillify</span>
+                        </a>
+                        <div class="branding-text">
+                            <h1>Join Skillify Today!</h1>
+                            <p>Start your peer-to-peer learning journey</p>
+                        </div>
+                        <div class="benefits-list">
+                            <div class="benefit-item"><i class="bi bi-check-circle-fill"></i><span>100 Free Starting Credits</span></div>
+                            <div class="benefit-item"><i class="bi bi-check-circle-fill"></i><span>Dual-Role System (Learn & Teach)</span></div>
+                            <div class="benefit-item"><i class="bi bi-check-circle-fill"></i><span>Access to Verified Tutors</span></div>
+                            <div class="benefit-item"><i class="bi bi-check-circle-fill"></i><span>No Credit Card Required</span></div>
+                        </div>
+                        <div class="illustration">
+                            <svg viewBox="0 0 400 300" class="auth-svg">
+                                <circle cx="200" cy="150" r="80" fill="#4ECDC4" opacity="0.1"/>
+                                <circle cx="200" cy="150" r="60" fill="#4ECDC4" opacity="0.2"/>
+                                <circle cx="200" cy="130" r="22" fill="#FFB6B6"/>
+                                <rect x="175" y="155" width="50" height="55" rx="10" fill="#4ECDC4"/>
+                                <path d="M 140 110 L 143 118 L 151 118 L 145 123 L 147 131 L 140 126 L 133 131 L 135 123 L 129 118 L 137 118 Z" fill="#FFB84D" class="twinkle"/>
+                                <path d="M 260 115 L 262 121 L 268 121 L 263 125 L 265 131 L 260 127 L 255 131 L 257 125 L 252 121 L 258 121 Z" fill="#FFB84D" class="twinkle"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-5 right-panel">
+                    <div class="auth-form-container">
+                        <div class="auth-header">
+                            <h2>Create Account</h2>
+                            <p>Join thousands of learners and tutors</p>
+                        </div>
+
+                        <!-- Server-side messages (fallback) -->
+                        <div id="serverErrors"></div>
+
+                        <form id="registerForm" class="auth-form" novalidate>
+                            {% csrf_token %}
+
+                            <!-- Full Name -->
+                            <div class="form-group">
+                                <label for="fullName" class="form-label"><i class="bi bi-person"></i> Full Name</label>
+                                <input type="text" class="form-control" id="fullName" name="fullName" placeholder="Enter your full name" autocomplete="name">
+                                <div class="field-feedback" id="fullNameFeedback"></div>
+                            </div>
+
+                            <!-- Email -->
+                            <div class="form-group">
+                                <label for="email" class="form-label"><i class="bi bi-envelope"></i> Email</label>
+                                <input type="email" class="form-control" id="email" name="email" placeholder="Enter your email" autocomplete="email">
+                                <div class="field-feedback" id="emailFeedback"></div>
+                            </div>
+
+                            <!-- Password -->
+                            <div class="form-group">
+                                <label for="password" class="form-label"><i class="bi bi-lock"></i> Password</label>
+                                <div class="password-input">
+                                    <input type="password" class="form-control" id="password" name="password" placeholder="Create a strong password" autocomplete="new-password">
+                                    <button type="button" class="password-toggle" id="togglePassword"><i class="bi bi-eye"></i></button>
+                                </div>
+                                <div class="strength-container">
+                                    <div class="strength-bar"><div class="fill" id="strengthFill"></div></div>
+                                    <div class="strength-label" id="strengthLabel"></div>
+                                    <div class="strength-checks">
+                                        <span class="strength-check" id="chkLen">6+ chars</span>
+                                        <span class="strength-check" id="chkUpper">Uppercase</span>
+                                        <span class="strength-check" id="chkLower">Lowercase</span>
+                                        <span class="strength-check" id="chkNum">Number</span>
+                                        <span class="strength-check" id="chkSpecial">Special</span>
+                                    </div>
+                                </div>
+                                <div class="field-feedback" id="passwordFeedback"></div>
+                            </div>
+
+                            <!-- Confirm Password -->
+                            <div class="form-group">
+                                <label for="confirmPassword" class="form-label"><i class="bi bi-lock-fill"></i> Confirm Password</label>
+                                <div class="password-input">
+                                    <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" placeholder="Re-enter your password" autocomplete="new-password">
+                                    <button type="button" class="password-toggle" id="toggleConfirmPassword"><i class="bi bi-eye"></i></button>
+                                </div>
+                                <div class="field-feedback" id="confirmFeedback"></div>
+                            </div>
+
+                            <!-- Role -->
+                            <div class="form-group">
+                                <label class="form-label"><i class="bi bi-person-badge"></i> I want to start as:</label>
+                                <div class="role-selection">
+                                    <div class="role-option">
+                                        <input type="radio" id="learner" name="role" value="learner" checked>
+                                        <label for="learner" class="role-card">
+                                            <div class="role-icon learner-icon"><i class="bi bi-book"></i></div>
+                                            <div class="role-name">Learner</div>
+                                            <div class="role-desc">Find and learn from tutors</div>
+                                        </label>
+                                    </div>
+                                    <div class="role-option">
+                                        <input type="radio" id="tutor" name="role" value="tutor">
+                                        <label for="tutor" class="role-card">
+                                            <div class="role-icon tutor-icon"><i class="bi bi-person-video3"></i></div>
+                                            <div class="role-name">Tutor</div>
+                                            <div class="role-desc">Teach and earn credits</div>
+                                        </label>
+                                    </div>
+                                </div>
+                                <small class="form-text"><i class="bi bi-info-circle"></i> You can switch roles anytime later</small>
+                            </div>
+
+                            <!-- Terms -->
+                            <div class="form-group">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="terms" name="terms">
+                                    <label class="form-check-label" for="terms">
+                                        I agree to the <a href="#" class="link">Terms & Conditions</a> and <a href="#" class="link">Privacy Policy</a>
+                                    </label>
+                                </div>
+                                <div class="field-feedback" id="termsFeedback"></div>
+                            </div>
+
+                            <!-- Submit -->
+                            <button type="submit" class="btn btn-primary btn-block" id="submitBtn" disabled>
+                                <span class="spinner-submit"></span>
+                                <span class="btn-text"><i class="bi bi-rocket-takeoff"></i> Create Account</span>
+                            </button>
+
+                            <div class="divider"><span>or</span></div>
+
+                            <a href="/accounts/google/login/?process=login" class="btn btn-block" style="background:var(--card-bg);border:2px solid var(--border-color);color:var(--text-primary);font-weight:600;display:flex;align-items:center;justify-content:center;gap:10px;padding:12px;border-radius:10px;transition:all 0.3s;">
+                                <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+                                Sign up with Google
+                            </a>
+
+                            <div class="divider"><span>Already have an account?</span></div>
+
+                            <a href="{% url 'login' %}" class="btn btn-outline-primary btn-block">
+                                <i class="bi bi-box-arrow-in-right"></i> Login
+                            </a>
+                        </form>
+
+                        <div class="text-center mt-4">
+                            <a href="{% url 'index' %}" class="back-link"><i class="bi bi-arrow-left"></i> Back to Home</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+
+        // ===== ELEMENTS =====
+        const form = document.getElementById('registerForm');
+        const fullNameInput = document.getElementById('fullName');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const confirmInput = document.getElementById('confirmPassword');
+        const termsCheck = document.getElementById('terms');
+        const submitBtn = document.getElementById('submitBtn');
+
+        const fullNameFB = document.getElementById('fullNameFeedback');
+        const emailFB = document.getElementById('emailFeedback');
+        const passwordFB = document.getElementById('passwordFeedback');
+        const confirmFB = document.getElementById('confirmFeedback');
+        const termsFB = document.getElementById('termsFeedback');
+
+        const strengthFill = document.getElementById('strengthFill');
+        const strengthLabel = document.getElementById('strengthLabel');
+
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+        // ===== VALIDATION STATE =====
+        const state = {
+            fullName: false,
+            email: false,
+            password: false,
+            confirm: false,
+            terms: false,
+        };
+
+        function updateSubmitBtn() {
+            const allValid = Object.values(state).every(v => v === true);
+            submitBtn.disabled = !allValid;
+        }
+
+        function setFeedback(el, input, type, message) {
+            const icons = { error: 'bi-x-circle-fill', success: 'bi-check-circle-fill', checking: 'bi-hourglass-split' };
+            el.className = 'field-feedback ' + type;
+            el.innerHTML = message ? `<i class="bi ${icons[type]}"></i> ${message}` : '';
+            if (input) {
+                input.classList.remove('is-valid-custom', 'is-invalid-custom');
+                if (type === 'success') input.classList.add('is-valid-custom');
+                else if (type === 'error') input.classList.add('is-invalid-custom');
+            }
+        }
+
+        // ===== 1. FULL NAME VALIDATION =====
+        fullNameInput.addEventListener('input', function() {
+            const val = this.value.trim();
+            if (!val) {
+                setFeedback(fullNameFB, this, 'error', 'Full name is required');
+                state.fullName = false;
+            } else if (val.length < 2) {
+                setFeedback(fullNameFB, this, 'error', 'Name must be at least 2 characters');
+                state.fullName = false;
+            } else if (!/^[a-zA-Z\s.'-]+$/.test(val)) {
+                setFeedback(fullNameFB, this, 'error', 'Name can only contain letters and spaces');
+                state.fullName = false;
+            } else {
+                setFeedback(fullNameFB, this, 'success', 'Looks good!');
+                state.fullName = true;
+            }
+            updateSubmitBtn();
+        });
+
+        // ===== 2. EMAIL VALIDATION (FORMAT + AJAX EXISTS CHECK) =====
+        let emailTimer = null;
+        let lastCheckedEmail = '';
+
+        emailInput.addEventListener('input', function() {
+            const val = this.value.trim().toLowerCase();
+            clearTimeout(emailTimer);
+
+            if (!val) {
+                setFeedback(emailFB, this, 'error', 'Email is required');
+                state.email = false;
+                updateSubmitBtn();
+                return;
+            }
+
+            // Basic format check
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(val)) {
+                setFeedback(emailFB, this, 'error', 'Please enter a valid email address');
+                state.email = false;
+                updateSubmitBtn();
+                return;
+            }
+
+            // Format is valid — check server if email exists (debounced)
+            setFeedback(emailFB, this, 'checking', 'Checking availability...');
+            state.email = false;
+            updateSubmitBtn();
+
+            emailTimer = setTimeout(function() {
+                if (val === lastCheckedEmail) return;
+                lastCheckedEmail = val;
+
+                fetch('/api/check-email/?email=' + encodeURIComponent(val))
+                    .then(r => r.json())
+                    .then(data => {
+                        // Only update if email hasn't changed since request
+                        if (emailInput.value.trim().toLowerCase() !== val) return;
+
+                        if (data.exists) {
+                            setFeedback(emailFB, emailInput, 'error', 'This email is already registered. <a href="/login/" style="color:#667eea;">Login instead?</a>');
+                            state.email = false;
+                        } else {
+                            setFeedback(emailFB, emailInput, 'success', 'Email is available!');
+                            state.email = true;
+                        }
+                        updateSubmitBtn();
+                    })
+                    .catch(() => {
+                        setFeedback(emailFB, emailInput, 'success', 'Format looks good');
+                        state.email = true;
+                        updateSubmitBtn();
+                    });
+            }, 500);
+        });
+
+        // ===== 3. PASSWORD STRENGTH VALIDATION =====
+        passwordInput.addEventListener('input', function() {
+            const p = this.value;
+            const checks = {
+                len: p.length >= 6,
+                upper: /[A-Z]/.test(p),
+                lower: /[a-z]/.test(p),
+                num: /[0-9]/.test(p),
+                special: /[^A-Za-z0-9]/.test(p),
+            };
+
+            // Update check badges
+            document.getElementById('chkLen').classList.toggle('pass', checks.len);
+            document.getElementById('chkUpper').classList.toggle('pass', checks.upper);
+            document.getElementById('chkLower').classList.toggle('pass', checks.lower);
+            document.getElementById('chkNum').classList.toggle('pass', checks.num);
+            document.getElementById('chkSpecial').classList.toggle('pass', checks.special);
+
+            // Calculate strength score
+            let score = Object.values(checks).filter(Boolean).length;
+
+            // Strength bar
+            const pct = (score / 5) * 100;
+            strengthFill.style.width = pct + '%';
+
+            const colors = ['#dc3545', '#dc3545', '#ffc107', '#17a2b8', '#28a745'];
+            const labels = ['Very Weak', 'Weak', 'Fair', 'Strong', 'Very Strong'];
+            const idx = Math.min(score, 4);
+
+            if (p.length === 0) {
+                strengthFill.style.width = '0%';
+                strengthLabel.textContent = '';
+                setFeedback(passwordFB, this, 'error', 'Password is required');
+                state.password = false;
+            } else {
+                strengthFill.style.background = colors[idx];
+                strengthLabel.textContent = labels[idx];
+                strengthLabel.style.color = colors[idx];
+
+                if (!checks.len) {
+                    setFeedback(passwordFB, this, 'error', 'At least 6 characters required');
+                    state.password = false;
+                } else if (score < 3) {
+                    setFeedback(passwordFB, this, 'error', 'Password is too weak. Add uppercase, numbers, or symbols.');
+                    state.password = false;
+                } else {
+                    setFeedback(passwordFB, this, 'success', score >= 4 ? 'Excellent password!' : 'Good password');
+                    state.password = true;
+                }
+            }
+
+            // Re-validate confirm if it has a value
+            if (confirmInput.value) {
+                validateConfirm();
+            }
+            updateSubmitBtn();
+        });
+
+        // ===== 4. CONFIRM PASSWORD MATCH =====
+        function validateConfirm() {
+            const pass = passwordInput.value;
+            const conf = confirmInput.value;
+
+            if (!conf) {
+                setFeedback(confirmFB, confirmInput, 'error', 'Please confirm your password');
+                state.confirm = false;
+            } else if (conf !== pass) {
+                setFeedback(confirmFB, confirmInput, 'error', 'Passwords do not match');
+                state.confirm = false;
+            } else {
+                setFeedback(confirmFB, confirmInput, 'success', 'Passwords match!');
+                state.confirm = true;
+            }
+            updateSubmitBtn();
+        }
+
+        confirmInput.addEventListener('input', validateConfirm);
+
+        // ===== 5. TERMS CHECKBOX =====
+        termsCheck.addEventListener('change', function() {
+            if (this.checked) {
+                setFeedback(termsFB, null, 'success', '');
+                state.terms = true;
+            } else {
+                setFeedback(termsFB, null, 'error', 'You must accept the terms');
+                state.terms = false;
+            }
+            updateSubmitBtn();
+        });
+
+        // ===== 6. FORM SUBMIT (AJAX - NO RELOAD) =====
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            // Final check
+            if (!Object.values(state).every(v => v)) return;
+
+            const role = document.querySelector('input[name="role"]:checked').value;
+            const payload = {
+                fullName: fullNameInput.value.trim(),
+                email: emailInput.value.trim().toLowerCase(),
+                password: passwordInput.value,
+                confirmPassword: confirmInput.value,
+                role: role,
+            };
+
+            // Show loading
+            submitBtn.classList.add('btn-loading');
+            submitBtn.disabled = true;
+
+            fetch('/api/register/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken,
+                },
+                body: JSON.stringify(payload),
+            })
+            .then(r => r.json().then(data => ({ status: r.status, data })))
+            .then(({ status, data }) => {
+                if (data.success) {
+                    // Show success overlay
+                    const overlay = document.createElement('div');
+                    overlay.className = 'success-overlay';
+                    overlay.innerHTML = `
+                        <div class="success-icon"><i class="bi bi-check-lg"></i></div>
+                        <h3 style="font-weight:700;color:#333;">Account Created!</h3>
+                        <p style="color:#6c757d;">${data.message}</p>
+                        <div class="spinner-border text-primary mt-3" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    `;
+                    document.body.appendChild(overlay);
+
+                    // Redirect after 2 seconds
+                    setTimeout(function() {
+                        window.location.href = data.redirect || '/verify-otp/';
+                    }, 2000);
+                } else {
+                    // Show field-level errors from server
+                    submitBtn.classList.remove('btn-loading');
+                    submitBtn.disabled = false;
+
+                    if (data.errors) {
+                        if (data.errors.fullName) setFeedback(fullNameFB, fullNameInput, 'error', data.errors.fullName);
+                        if (data.errors.email) setFeedback(emailFB, emailInput, 'error', data.errors.email);
+                        if (data.errors.password) setFeedback(passwordFB, passwordInput, 'error', data.errors.password);
+                        if (data.errors.confirmPassword) setFeedback(confirmFB, confirmInput, 'error', data.errors.confirmPassword);
+                    } else if (data.error) {
+                        const errDiv = document.getElementById('serverErrors');
+                        errDiv.innerHTML = `<div class="alert alert-danger alert-dismissible fade show"><i class="bi bi-exclamation-triangle"></i> ${data.error}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>`;
+                    }
+                }
+            })
+            .catch(err => {
+                submitBtn.classList.remove('btn-loading');
+                submitBtn.disabled = false;
+                const errDiv = document.getElementById('serverErrors');
+                errDiv.innerHTML = `<div class="alert alert-danger alert-dismissible fade show"><i class="bi bi-exclamation-triangle"></i> Network error. Please try again.<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>`;
+            });
+        });
+
+        // ===== PASSWORD TOGGLE =====
+        function setupToggle(btnId, inputId) {
+            const btn = document.getElementById(btnId);
+            if (btn) {
+                btn.addEventListener('click', function() {
+                    const inp = document.getElementById(inputId);
+                    inp.type = inp.type === 'password' ? 'text' : 'password';
+                    this.querySelector('i').classList.toggle('bi-eye');
+                    this.querySelector('i').classList.toggle('bi-eye-slash');
+                });
+            }
+        }
+        setupToggle('togglePassword', 'password');
+        setupToggle('toggleConfirmPassword', 'confirmPassword');
+
+        // ===== THEME TOGGLE =====
+        const themeToggle = document.getElementById('themeToggle');
+        if (themeToggle) {
+            const saved = localStorage.getItem('theme') || 'light';
+            if (saved === 'dark') {
+                document.body.classList.add('dark-theme');
+                themeToggle.innerHTML = '<i class="bi bi-sun-fill"></i>';
+            }
+            themeToggle.addEventListener('click', function() {
+                document.body.classList.toggle('dark-theme');
+                const isDark = document.body.classList.contains('dark-theme');
+                localStorage.setItem('theme', isDark ? 'dark' : 'light');
+                this.innerHTML = isDark ? '<i class="bi bi-sun-fill"></i>' : '<i class="bi bi-moon-stars-fill"></i>';
+            });
+        }
+
+    });
+    </script>
+    {% include "core/chatbot_widget.html" %}
+    <script src="{% static 'js/dark-mode.js' %}"></script>
+</body>
+</html>

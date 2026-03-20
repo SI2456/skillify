@@ -1,0 +1,50 @@
+{% extends "emails/base_email.html" %}
+{% block content %}
+<h2 style="margin:0 0 16px;color:#333;font-size:20px;">✅ Booking Confirmed!</h2>
+<p style="color:#555;font-size:15px;line-height:1.6;margin:0 0 20px;">
+    Hi <strong>{{ learner_name }}</strong>, your session has been booked successfully!
+</p>
+
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f0f0ff;border-radius:12px;padding:20px;margin-bottom:20px;border-left:4px solid #667eea;">
+    <tr><td style="padding:8px 16px;">
+        <table width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+                <td style="padding:6px 0;color:#888;font-size:13px;width:100px;">📚 Session</td>
+                <td style="padding:6px 0;color:#333;font-size:14px;font-weight:600;">{{ session_title }}</td>
+            </tr>
+            <tr>
+                <td style="padding:6px 0;color:#888;font-size:13px;">👨‍🏫 Tutor</td>
+                <td style="padding:6px 0;color:#333;font-size:14px;font-weight:600;">{{ tutor_name }}</td>
+            </tr>
+            <tr>
+                <td style="padding:6px 0;color:#888;font-size:13px;">📅 Date</td>
+                <td style="padding:6px 0;color:#333;font-size:14px;font-weight:600;">{{ session_date }}</td>
+            </tr>
+            <tr>
+                <td style="padding:6px 0;color:#888;font-size:13px;">🕐 Time</td>
+                <td style="padding:6px 0;color:#333;font-size:14px;font-weight:600;">{{ session_time }}</td>
+            </tr>
+            <tr>
+                <td style="padding:6px 0;color:#888;font-size:13px;">💰 Paid</td>
+                <td style="padding:6px 0;color:#667eea;font-size:14px;font-weight:700;">{{ credits }} credits</td>
+            </tr>
+        </table>
+    </td></tr>
+</table>
+
+{% if zoom_url %}
+<div style="background:#e8f5e9;border-radius:12px;padding:16px;margin-bottom:20px;text-align:center;">
+    <p style="margin:0 0 8px;color:#333;font-size:14px;font-weight:600;">🎥 Zoom Meeting</p>
+    <a href="{{ zoom_url }}" style="display:inline-block;background:#2D8CFF;color:#fff;text-decoration:none;padding:10px 28px;border-radius:8px;font-weight:700;font-size:13px;">Join Zoom Meeting</a>
+    {% if zoom_id %}
+    <p style="margin:10px 0 0;color:#888;font-size:12px;">Meeting ID: {{ zoom_id }} {% if zoom_pass %}| Password: {{ zoom_pass }}{% endif %}</p>
+    {% endif %}
+</div>
+{% endif %}
+
+<div style="text-align:center;margin:24px 0;">
+    <a href="{{ site_url }}/my-sessions/" style="display:inline-block;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;text-decoration:none;padding:12px 32px;border-radius:10px;font-weight:700;font-size:14px;">View My Sessions</a>
+</div>
+
+<p style="color:#888;font-size:13px;margin:0;">Happy learning! 📖 — The Skillify Team</p>
+{% endblock %}

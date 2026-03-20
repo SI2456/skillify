@@ -1,0 +1,612 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Skillify</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/svg+xml" href="{% static 'favicon.svg' %}">
+    <link rel="stylesheet" href="{% static 'css/dark-mode.css' %}
+    <link rel="stylesheet" href="{% static 'css/mobile.css' %}">">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --primary: #4ECDC4; --primary-dark: #3BABA3;
+            --bg: #F0F4F8; --bg-sec: #E8EFF7; --card: #FFFFFF;
+            --text: #2D3748; --text-sec: #718096; --text-muted: #A0AEC0;
+            --border: #E2E8F0;
+            --shadow-sm: 0 2px 8px rgba(0,0,0,0.06); --shadow-md: 0 4px 16px rgba(0,0,0,0.1);
+            --gradient-teal: linear-gradient(135deg, #4ECDC4, #3BABA3);
+            --gradient-purple: linear-gradient(135deg, #667eea, #764ba2);
+            --gradient-pink: linear-gradient(135deg, #f093fb, #f5576c);
+            --gradient-blue: linear-gradient(135deg, #4facfe, #00f2fe);
+        }
+        body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh;margin:0;}
+
+        /* Sidebar */
+        .sidebar{width:250px;background:var(--card);position:fixed;height:100vh;overflow-y:auto;box-shadow:2px 0 15px rgba(0,0,0,0.06);z-index:100;padding:20px 0;border-right:2px solid var(--border);}
+        .sidebar-brand{padding:0 20px 20px;border-bottom:2px solid var(--border);margin-bottom:12px;text-align:center;}
+        .sidebar-brand h4{font-weight:800;margin:0;font-size:1.3rem;display:flex;align-items:center;justify-content:center;gap:8px;}
+        .sidebar-brand h4 i{color:var(--primary);font-size:1.5rem;}
+        .sidebar-brand small{color:var(--text-muted);font-size:0.72rem;display:block;margin-top:4px;}
+        .nav-sec{padding:0 10px;margin-bottom:6px;}
+        .nav-sec-title{font-size:0.6rem;text-transform:uppercase;color:var(--text-muted);letter-spacing:1.5px;padding:10px 14px 4px;font-weight:700;}
+        .nav-item-s{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;color:var(--text-sec);font-size:0.85rem;cursor:pointer;transition:all .2s;font-weight:500;margin-bottom:2px;text-decoration:none;border:2px solid transparent;}
+        .nav-item-s:hover{background:rgba(78,205,196,0.08);color:var(--primary);border-color:rgba(78,205,196,0.15);}
+        .nav-item-s.active{background:var(--gradient-teal);color:#fff;font-weight:600;box-shadow:0 4px 15px rgba(78,205,196,0.3);border-color:transparent;}
+        .nav-item-s i{font-size:1rem;width:20px;text-align:center;}
+        .nav-badge{margin-left:auto;background:#EF4444;color:#fff;font-size:0.55rem;padding:2px 7px;border-radius:10px;font-weight:700;}
+
+        /* Main */
+        .main-content{margin-left:250px;flex:1;padding:24px 28px;min-height:100vh;}
+        .page-title{font-size:1.5rem;font-weight:800;color:var(--text);margin-bottom:4px;display:flex;align-items:center;gap:8px;}
+        .page-title i{color:var(--primary);}
+        .page-subtitle{color:var(--text-muted);font-size:0.82rem;margin-bottom:20px;}
+
+        /* Stat Cards */
+        .stat-card-a{background:var(--card);border-radius:16px;padding:20px;box-shadow:var(--shadow-sm);transition:all .2s;border:2px solid var(--border);}
+        .stat-card-a:hover{border-color:var(--primary);transform:translateY(-2px);box-shadow:var(--shadow-md);}
+        .stat-val{font-size:1.8rem;font-weight:800;line-height:1;}
+        .stat-label-a{font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-top:6px;}
+        .stat-ico{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;color:#fff;}
+
+        /* Panel Card */
+        .panel-card{background:var(--card);border-radius:16px;border:2px solid var(--border);padding:20px;margin-bottom:20px;box-shadow:var(--shadow-sm);}
+        .panel-card:hover{border-color:var(--primary);}
+        .panel-card h5{font-weight:700;font-size:1rem;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+        .panel-card h5 i{color:var(--primary);}
+
+        /* Table */
+        .admin-table{width:100%;font-size:0.82rem;}
+        .admin-table th{color:var(--text-muted);font-weight:600;text-transform:uppercase;font-size:0.68rem;letter-spacing:1px;padding:10px 12px;border-bottom:2px solid var(--border);}
+        .admin-table td{padding:10px 12px;border-bottom:1px solid var(--bg-sec);vertical-align:middle;color:var(--text);}
+        .admin-table tr:hover td{background:rgba(78,205,196,0.04);}
+        .avatar-sm{width:32px;height:32px;border-radius:50%;object-fit:cover;margin-right:8px;border:2px solid var(--primary);}
+
+        /* Badges */
+        .b-role{padding:3px 10px;border-radius:20px;font-size:0.7rem;font-weight:600;display:inline-block;}
+        .b-learner{background:rgba(102,126,234,0.12);color:#667eea;}
+        .b-tutor{background:rgba(78,205,196,0.12);color:#3BABA3;}
+        .b-active{background:rgba(16,185,129,0.12);color:#10B981;}
+        .b-suspended{background:rgba(239,68,68,0.12);color:#EF4444;}
+        .b-upcoming{background:rgba(59,130,246,0.12);color:#3B82F6;}
+        .b-completed{background:rgba(16,185,129,0.12);color:#10B981;}
+        .b-disputed{background:rgba(239,68,68,0.12);color:#EF4444;}
+        .b-cancelled{background:rgba(160,174,192,0.15);color:#718096;}
+
+        /* Buttons */
+        .btn-xs{font-size:0.7rem;padding:4px 10px;border-radius:8px;font-weight:600;border:2px solid;transition:all .2s;}
+        .btn-xs:hover{transform:translateY(-1px);}
+
+        /* Search */
+        .search-admin{background:var(--card);border:2px solid var(--border);color:var(--text);border-radius:10px;padding:9px 14px;font-size:0.85rem;font-family:'Inter',sans-serif;transition:all .2s;}
+        .search-admin:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 4px rgba(78,205,196,0.1);}
+        .search-admin::placeholder{color:var(--text-muted);}
+
+        /* Chart */
+        .chart-box{background:var(--card);border-radius:16px;border:2px solid var(--border);padding:20px;box-shadow:var(--shadow-sm);}
+
+        /* Tabs */
+        .tab-section{display:none;}.tab-section.active{display:block;}
+
+        /* Dispute card */
+        .dispute-card{background:var(--card);border-radius:16px;border:2px solid var(--border);padding:20px;margin-bottom:16px;box-shadow:var(--shadow-sm);}
+        .dispute-card:hover{border-color:var(--primary);}
+        .dispute-reason{background:var(--bg-sec);border-radius:10px;padding:12px 16px;font-size:0.85rem;color:var(--text-sec);margin:12px 0;border-left:4px solid #EF4444;}
+
+        /* Scrollbar */
+        ::-webkit-scrollbar{width:6px;}::-webkit-scrollbar-track{background:var(--bg);}::-webkit-scrollbar-thumb{background:var(--primary);border-radius:3px;}
+
+        @media(max-width:768px){.sidebar{display:none;}.main-content{margin-left:0;padding:16px;}}
+    </style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<div class="sidebar">
+    <div class="sidebar-brand">
+        <h4><i class="bi bi-lightbulb-fill"></i> Skillify</h4>
+        <small>Admin Panel</small>
+    </div>
+
+    <div class="nav-sec">
+        <div class="nav-sec-title">Overview</div>
+        <div class="nav-item-s active" onclick="showTab('dashboard',this)"><i class="bi bi-speedometer2"></i> Dashboard</div>
+        <div class="nav-item-s" onclick="showTab('analytics',this)"><i class="bi bi-graph-up"></i> Analytics</div>
+    </div>
+
+    <div class="nav-sec">
+        <div class="nav-sec-title">Management</div>
+        <div class="nav-item-s" onclick="showTab('users',this)"><i class="bi bi-people"></i> Users</div>
+        <div class="nav-item-s" onclick="showTab('tutors',this)"><i class="bi bi-mortarboard"></i> Tutors</div>
+        <div class="nav-item-s" onclick="showTab('skills',this)"><i class="bi bi-lightbulb"></i> Skills</div>
+        <div class="nav-item-s" onclick="showTab('sessions',this)"><i class="bi bi-calendar3"></i> Sessions</div>
+        <div class="nav-item-s" onclick="showTab('reviews',this)"><i class="bi bi-star"></i> Reviews</div>
+    </div>
+
+    <div class="nav-sec">
+        <div class="nav-sec-title">Actions</div>
+        <div class="nav-item-s" onclick="showTab('disputes',this)"><i class="bi bi-flag"></i> Disputes <span class="nav-badge" id="disputeBadge">0</span></div>
+        <div class="nav-item-s" onclick="showTab('reports',this)"><i class="bi bi-shield-exclamation"></i> Reports <span class="nav-badge" id="reportBadge">0</span></div>
+        <div class="nav-item-s" onclick="showTab('announcements',this)"><i class="bi bi-megaphone"></i> Announcements</div>
+    </div>
+
+    <div class="nav-sec" style="margin-top:auto;padding-top:16px;border-top:2px solid var(--border);">
+        <a href="{% url 'dashboard' %}" class="nav-item-s" style="text-decoration:none;"><i class="bi bi-arrow-left"></i> Back to Skillify</a>
+        <a href="/admin/" class="nav-item-s" style="text-decoration:none;"><i class="bi bi-gear"></i> Django Admin</a>
+    </div>
+</div>
+
+<!-- Main Content -->
+<div class="main-content">
+    <!-- Mobile sidebar toggle -->
+    <button onclick="document.querySelector('.sidebar').classList.toggle('open');document.getElementById('sidebarOverlay').classList.toggle('show');" 
+            style="display:none;position:fixed;top:12px;left:12px;z-index:999;width:40px;height:40px;border-radius:10px;border:2px solid var(--border);background:var(--card);color:var(--text);font-size:1.1rem;cursor:pointer;" 
+            class="mobile-menu-btn">
+        <i class="bi bi-list"></i>
+    </button>
+    <div id="sidebarOverlay" onclick="document.querySelector('.sidebar').classList.remove('open');this.classList.remove('show');"
+         style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);z-index:999;"></div>
+    <style>
+    @media(max-width:767px){.mobile-menu-btn{display:flex !important;align-items:center;justify-content:center;}}
+    #sidebarOverlay.show{display:block !important;}
+    </style>
+
+    <!-- DASHBOARD -->
+    <div class="tab-section active" id="tab-dashboard">
+        <h3 class="page-title"><i class="bi bi-speedometer2"></i> Dashboard</h3>
+        <p class="page-subtitle">Platform overview and recent activity</p>
+        <div class="row g-3 mb-4" id="statsGrid"></div>
+        <div class="panel-card">
+            <h5><i class="bi bi-activity"></i> Recent Activity</h5>
+            <div id="recentActivity" style="max-height:400px;overflow-y:auto;"><div class="text-center py-4"><div class="spinner-border spinner-border-sm text-muted"></div></div></div>
+        </div>
+    </div>
+
+    <!-- USERS -->
+    <div class="tab-section" id="tab-users">
+        <h3 class="page-title"><i class="bi bi-people"></i> User Management</h3>
+        <p class="page-subtitle">View, search, and manage all users</p>
+        <div class="d-flex gap-2 mb-3">
+            <input type="text" class="search-admin" id="userSearch" placeholder="Search by name or email..." style="max-width:300px;">
+            <select class="search-admin" id="userRole" style="max-width:150px;" onchange="loadUsers()">
+                <option value="">All Roles</option><option value="learner">Learners</option><option value="tutor">Tutors</option>
+            </select>
+            <button class="btn btn-sm" style="background:var(--gradient-teal);color:#fff;border:none;border-radius:10px;" onclick="loadUsers()"><i class="bi bi-search"></i></button>
+        </div>
+        <div class="panel-card"><table class="admin-table"><thead><tr><th>User</th><th>Email</th><th>Role</th><th>Trust</th><th>Balance</th><th>Status</th><th>Actions</th></tr></thead><tbody id="usersTable"></tbody></table></div>
+    </div>
+
+    <!-- TUTORS -->
+    <div class="tab-section" id="tab-tutors">
+        <h3 class="page-title"><i class="bi bi-mortarboard"></i> Tutor Management</h3>
+        <p class="page-subtitle">Manage tutor profiles, ratings, and trust scores</p>
+        <div class="d-flex gap-2 mb-3">
+            <input type="text" class="search-admin" id="tutorSearch" placeholder="Search tutors..." style="max-width:300px;">
+            <button class="btn btn-sm" style="background:var(--gradient-teal);color:#fff;border:none;border-radius:10px;" onclick="loadTutors()"><i class="bi bi-search"></i></button>
+        </div>
+        <div class="panel-card"><table class="admin-table"><thead><tr><th>Tutor</th><th>Email</th><th>Trust Score</th><th>Sessions</th><th>Balance</th><th>Status</th><th>Actions</th></tr></thead><tbody id="tutorsTable"></tbody></table></div>
+    </div>
+
+    <!-- SKILLS -->
+    <div class="tab-section" id="tab-skills">
+        <h3 class="page-title"><i class="bi bi-lightbulb"></i> Skill Management</h3>
+        <p class="page-subtitle">Add, edit, and manage skills on the platform</p>
+        <div class="d-flex gap-2 mb-3">
+            <input type="text" class="search-admin" id="newSkillName" placeholder="New skill name..." style="max-width:220px;">
+            <input type="text" class="search-admin" id="newSkillIcon" placeholder="bi-lightbulb" value="bi-lightbulb" style="max-width:180px;">
+            <button class="btn btn-sm" style="background:var(--gradient-teal);color:#fff;border:none;border-radius:10px;" onclick="addSkill()"><i class="bi bi-plus"></i> Add Skill</button>
+        </div>
+        <div class="panel-card"><table class="admin-table"><thead><tr><th>Skill</th><th>Icon</th><th>Sessions</th><th>Tutors</th><th>Bookings</th><th>Actions</th></tr></thead><tbody id="skillsTable"></tbody></table></div>
+    </div>
+
+    <!-- SESSIONS -->
+    <div class="tab-section" id="tab-sessions">
+        <h3 class="page-title"><i class="bi bi-calendar3"></i> Session Management</h3>
+        <p class="page-subtitle">View all sessions across the platform</p>
+        <div class="d-flex gap-2 mb-3">
+            <input type="text" class="search-admin" id="sessionSearch" placeholder="Search sessions..." style="max-width:220px;">
+            <select class="search-admin" id="sessionStatus" style="max-width:150px;" onchange="loadSessions()">
+                <option value="">All Status</option><option value="upcoming">Upcoming</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option>
+            </select>
+        </div>
+        <div class="panel-card"><table class="admin-table"><thead><tr><th>Session</th><th>Tutor</th><th>Skill</th><th>Level</th><th>Date</th><th>Credits</th><th>Bookings</th><th>Status</th></tr></thead><tbody id="sessionsTable"></tbody></table></div>
+    </div>
+
+    <!-- REVIEWS -->
+    <div class="tab-section" id="tab-reviews">
+        <h3 class="page-title"><i class="bi bi-star"></i> Reviews</h3>
+        <p class="page-subtitle">All learner reviews and ratings</p>
+        <div class="panel-card"><table class="admin-table"><thead><tr><th>Reviewer</th><th>Tutor</th><th>Session</th><th>Rating</th><th>Comment</th><th>Date</th></tr></thead><tbody id="reviewsTable"></tbody></table></div>
+    </div>
+
+    <!-- DISPUTES -->
+    <div class="tab-section" id="tab-disputes">
+        <h3 class="page-title"><i class="bi bi-flag"></i> Dispute Resolution</h3>
+        <p class="page-subtitle">Review and resolve disputed sessions</p>
+        <div id="disputesList"></div>
+    </div>
+
+    <!-- REPORTS TAB -->
+    <div class="tab-section" id="tab-reports">
+        <h3 class="page-title"><i class="bi bi-shield-exclamation"></i> Session Reports</h3>
+        <p class="page-subtitle">Auto-verified reports with session data, flags, and verdicts</p>
+        <div id="reportsList"></div>
+    </div>
+
+    <!-- ANNOUNCEMENTS -->
+    <div class="tab-section" id="tab-announcements">
+        <h3 class="page-title"><i class="bi bi-megaphone"></i> Send Announcement</h3>
+        <p class="page-subtitle">Broadcast notifications to all users</p>
+        <div class="panel-card" style="max-width:500px;">
+            <div class="mb-3">
+                <label class="form-label" style="font-weight:600;font-size:0.85rem;">Target Audience</label>
+                <select class="search-admin w-100" id="announcTarget">
+                    <option value="all">All Users</option><option value="tutors">Tutors Only</option><option value="learners">Learners Only</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label" style="font-weight:600;font-size:0.85rem;">Title</label>
+                <input type="text" class="search-admin w-100" id="announcTitle" placeholder="Notification title...">
+            </div>
+            <div class="mb-3">
+                <label class="form-label" style="font-weight:600;font-size:0.85rem;">Message</label>
+                <textarea class="search-admin w-100" id="announcMsg" rows="4" placeholder="Write your announcement..." style="resize:none;"></textarea>
+            </div>
+            <button class="btn w-100" style="background:var(--gradient-teal);color:#fff;border:none;border-radius:10px;padding:12px;font-weight:700;" onclick="sendAnnouncement()"><i class="bi bi-send"></i> Send Notification</button>
+            <div id="announcResult" class="mt-2"></div>
+        </div>
+    </div>
+
+    <!-- ANALYTICS -->
+    <div class="tab-section" id="tab-analytics">
+        <h3 class="page-title"><i class="bi bi-graph-up"></i> Analytics</h3>
+        <p class="page-subtitle">Platform growth, skill popularity, and performance</p>
+        <div class="row g-4">
+            <div class="col-lg-6"><div class="chart-box"><h6 style="font-weight:700;margin-bottom:12px;"><i class="bi bi-people" style="color:var(--primary);"></i> User Growth (Weekly)</h6><canvas id="chartUserGrowth" height="250"></canvas></div></div>
+            <div class="col-lg-6"><div class="chart-box"><h6 style="font-weight:700;margin-bottom:12px;"><i class="bi bi-bookmark" style="color:var(--primary);"></i> Booking Trend (Weekly)</h6><canvas id="chartBookings" height="250"></canvas></div></div>
+            <div class="col-lg-6"><div class="chart-box"><h6 style="font-weight:700;margin-bottom:12px;"><i class="bi bi-lightbulb" style="color:var(--primary);"></i> Skill Popularity</h6><canvas id="chartSkills" height="250"></canvas></div></div>
+            <div class="col-lg-6"><div class="chart-box"><h6 style="font-weight:700;margin-bottom:12px;"><i class="bi bi-trophy" style="color:var(--primary);"></i> Top Tutors by Earnings</h6><div id="topTutorsList"></div></div></div>
+            <div class="col-lg-6"><div class="chart-box"><h6 style="font-weight:700;margin-bottom:12px;"><i class="bi bi-currency-rupee" style="color:var(--primary);"></i> Revenue Trend (Weekly)</h6><canvas id="chartRevenue" height="250"></canvas></div></div>
+            <div class="col-lg-6">
+                <div class="chart-box">
+                    <h6 style="font-weight:700;margin-bottom:12px;"><i class="bi bi-receipt" style="color:var(--primary);"></i> Recent Payments</h6>
+                    <div id="revenueStats" class="d-flex gap-3 mb-3 flex-wrap"></div>
+                    <div id="recentPaymentsList" style="max-height:280px;overflow-y:auto;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function showTab(tab,el){
+    document.querySelectorAll('.tab-section').forEach(s=>s.classList.remove('active'));
+    document.querySelectorAll('.nav-item-s').forEach(n=>n.classList.remove('active'));
+    document.getElementById('tab-'+tab).classList.add('active');
+    if(el)el.classList.add('active');
+    const loaders={dashboard:loadDashboard,users:loadUsers,tutors:loadTutors,skills:loadSkills,sessions:loadSessions,reviews:loadReviews,disputes:loadDisputes,reports:loadReports,analytics:loadAnalytics};
+    if(loaders[tab])loaders[tab]();
+}
+function api(u){return fetch(u).then(r=>r.json());}
+function post(u,d){return fetch(u,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)}).then(r=>r.json());}
+
+// DASHBOARD
+function loadDashboard(){
+    api('/panel/api/stats/').then(d=>{
+        const items=[
+            {l:'Total Users',v:d.total_users,c:'#3B82F6',i:'people',g:'var(--gradient-blue)'},
+            {l:'Tutors',v:d.total_tutors,c:'#4ECDC4',i:'mortarboard',g:'var(--gradient-teal)'},
+            {l:'Learners',v:d.total_learners,c:'#F59E0B',i:'person',g:'linear-gradient(135deg,#F59E0B,#D97706)'},
+            {l:'Skills',v:d.total_skills,c:'#8B5CF6',i:'lightbulb',g:'var(--gradient-purple)'},
+            {l:'Sessions',v:d.total_sessions,c:'#06B6D4',i:'calendar3',g:'linear-gradient(135deg,#06B6D4,#0891B2)'},
+            {l:'Bookings',v:d.total_bookings,c:'#EC4899',i:'bookmark',g:'var(--gradient-pink)'},
+            {l:'Reviews',v:d.total_reviews,c:'#F59E0B',i:'star',g:'linear-gradient(135deg,#F59E0B,#D97706)'},
+            {l:'Open Disputes',v:d.open_disputes,c:'#EF4444',i:'flag',g:'linear-gradient(135deg,#EF4444,#DC2626)'},
+            {l:'Revenue (₹)',v:'₹'+d.total_revenue,c:'#10B981',i:'currency-rupee',g:'linear-gradient(135deg,#10B981,#059669)'},
+            {l:'Credits Purchased',v:d.total_credits_purchased,c:'#4ECDC4',i:'coin',g:'var(--gradient-teal)'},
+            {l:'Credits in System',v:d.total_credits,c:'#8B5CF6',i:'wallet2',g:'var(--gradient-purple)'},
+            {l:'Messages',v:d.total_messages,c:'#3B82F6',i:'chat',g:'var(--gradient-blue)'},
+            {l:'New This Week',v:d.new_users_week,c:'#06B6D4',i:'person-plus',g:'linear-gradient(135deg,#06B6D4,#0891B2)'},
+            {l:'New This Month',v:d.new_users_month,c:'#4ECDC4',i:'calendar-month',g:'var(--gradient-teal)'},
+        ];
+        document.getElementById('statsGrid').innerHTML=items.map(s=>`
+            <div class="col-6 col-md-4 col-xl-3"><div class="stat-card-a">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div><div class="stat-val" style="color:${s.c}">${s.v}</div><div class="stat-label-a">${s.l}</div></div>
+                    <div class="stat-ico" style="background:${s.g}"><i class="bi bi-${s.i}"></i></div>
+                </div>
+            </div></div>`).join('');
+        document.getElementById('disputeBadge').textContent=d.open_disputes;
+        document.getElementById('recentActivity').innerHTML=d.recent_activity.map(a=>`
+            <div style="padding:10px 0;border-bottom:1px solid var(--border);display:flex;gap:12px;align-items:center;">
+                <div style="width:36px;height:36px;border-radius:50%;background:${a.type==='booking'?'rgba(78,205,196,0.12)':'rgba(245,158,11,0.12)'};display:flex;align-items:center;justify-content:center;">
+                    <i class="bi bi-${a.type==='booking'?'calendar-check':'star-fill'}" style="color:${a.type==='booking'?'#4ECDC4':'#F59E0B'};"></i>
+                </div>
+                <div style="flex:1;font-size:0.82rem;color:var(--text);">${a.text}</div>
+                <small style="color:var(--text-muted);font-size:0.7rem;white-space:nowrap;">${a.time}</small>
+            </div>`).join('')||'<div class="text-center py-3 text-muted">No recent activity</div>';
+    });
+}
+
+// USERS
+function loadUsers(){
+    const s=document.getElementById('userSearch').value,r=document.getElementById('userRole').value;
+    api(`/panel/api/users/?search=${s}&role=${r}`).then(d=>{
+        document.getElementById('usersTable').innerHTML=d.users.map(u=>`<tr>
+            <td><img src="${u.avatar}" class="avatar-sm">${u.name}</td><td>${u.email}</td>
+            <td><span class="b-role b-${u.role}">${u.role}</span></td><td>${u.trust_score.toFixed(0)}</td><td>${u.balance}</td>
+            <td><span class="b-role ${u.is_active?'b-active':'b-suspended'}">${u.is_active?'Active':'Suspended'}</span></td>
+            <td>${u.is_active?`<button class="btn-xs btn-outline-warning" onclick="userAction(${u.id},'suspend','${u.name}')">Suspend</button>`:`<button class="btn-xs btn-outline-success" onclick="userAction(${u.id},'activate','${u.name}')">Activate</button>`} <button class="btn-xs btn-outline-danger" onclick="userAction(${u.id},'delete','${u.name}')">Delete</button></td>
+        </tr>`).join('')||'<tr><td colspan="7" class="text-center py-3 text-muted">No users</td></tr>';
+    });
+}
+document.getElementById('userSearch')?.addEventListener('keydown',e=>{if(e.key==='Enter')loadUsers();});
+function userAction(id,a,name){
+    var msgs = {
+        suspend: 'Are you sure you want to SUSPEND "'+name+'"? They will not be able to login.',
+        activate: 'Activate "'+name+'"? They will be able to login again.',
+        delete: '⚠️ PERMANENTLY DELETE "'+name+'"? This cannot be undone. All their data, sessions, bookings, and reviews will be lost.',
+        make_admin: 'Make "'+name+'" an admin? They will have access to the admin panel.',
+        remove_admin: 'Remove admin access from "'+name+'"?'
+    };
+    if(!confirm(msgs[a] || 'Are you sure?'))return;
+    post('/panel/api/user/'+id+'/action/',{action:a}).then(d=>{if(d.success){showToast(d.message);loadUsers();loadTutors();}else alert(d.error);});
+}
+
+// TUTORS
+function loadTutors(){
+    const s=document.getElementById('tutorSearch').value;
+    api(`/panel/api/users/?search=${s}&role=tutor`).then(d=>{
+        document.getElementById('tutorsTable').innerHTML=d.users.map(u=>`<tr>
+            <td><img src="${u.avatar}" class="avatar-sm">${u.name}</td><td>${u.email}</td>
+            <td><strong style="color:var(--primary);">${u.trust_score.toFixed(0)}</strong>/100</td><td>${u.sessions_taught}</td><td>${u.balance}</td>
+            <td><span class="b-role ${u.is_active?'b-active':'b-suspended'}">${u.is_active?'Active':'Suspended'}</span></td>
+            <td>${u.is_active?`<button class="btn-xs btn-outline-warning" onclick="userAction(${u.id},'suspend','${u.name}')">Suspend</button>`:`<button class="btn-xs btn-outline-success" onclick="userAction(${u.id},'activate','${u.name}')">Activate</button>`}
+            ${!u.is_staff?` <button class="btn-xs btn-outline-primary" onclick="userAction(${u.id},'make_admin','${u.name}')">Make Admin</button>`:''}</td>
+        </tr>`).join('');
+    });
+}
+document.getElementById('tutorSearch')?.addEventListener('keydown',e=>{if(e.key==='Enter')loadTutors();});
+
+// SKILLS
+function loadSkills(){
+    api('/panel/api/skills/').then(d=>{
+        document.getElementById('skillsTable').innerHTML=d.skills.map(s=>`<tr>
+            <td><strong>${s.name}</strong></td><td><i class="bi ${s.icon}" style="color:var(--primary);"></i> ${s.icon}</td>
+            <td>${s.sessions}</td><td>${s.tutors}</td><td>${s.bookings}</td>
+            <td><button class="btn-xs btn-outline-danger" onclick="if(confirm('Delete ${s.name}?'))deleteSkill(${s.id})">Delete</button></td>
+        </tr>`).join('');
+    });
+}
+function addSkill(){
+    const n=document.getElementById('newSkillName').value.trim(),i=document.getElementById('newSkillIcon').value.trim();
+    if(!n)return alert('Enter name');
+    post('/panel/api/skill/action/',{action:'add',name:n,icon:i}).then(d=>{if(d.success){showToast(d.message);loadSkills();document.getElementById('newSkillName').value='';}else alert(d.error);});
+}
+function deleteSkill(id){post('/panel/api/skill/action/',{action:'delete',id}).then(d=>{if(d.success){showToast(d.message);loadSkills();}});}
+
+// SESSIONS
+function loadSessions(){
+    const s=document.getElementById('sessionSearch').value,st=document.getElementById('sessionStatus').value;
+    api(`/panel/api/sessions/?search=${s}&status=${st}`).then(d=>{
+        document.getElementById('sessionsTable').innerHTML=d.sessions.map(s=>`<tr>
+            <td><strong>${s.title}</strong></td><td>${s.tutor}</td><td>${s.skill}</td><td>${s.level}</td>
+            <td>${s.date}</td><td>${s.credits}</td><td>${s.bookings}</td>
+            <td><span class="b-role b-${s.status}">${s.status}</span></td>
+        </tr>`).join('');
+    });
+}
+document.getElementById('sessionSearch')?.addEventListener('keydown',e=>{if(e.key==='Enter')loadSessions();});
+
+// REVIEWS
+function loadReviews(){
+    api('/panel/api/reviews/').then(d=>{
+        document.getElementById('reviewsTable').innerHTML=d.reviews.map(r=>`<tr>
+            <td>${r.reviewer}</td><td>${r.tutor}</td><td>${r.session}</td>
+            <td style="color:#F59E0B;">${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</td>
+            <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.comment||'<em style="color:var(--text-muted);">No comment</em>'}</td><td>${r.created}</td>
+        </tr>`).join('');
+    });
+}
+
+// DISPUTES
+function loadDisputes(){
+    api('/panel/api/disputes/').then(d=>{
+        if(!d.disputes.length){document.getElementById('disputesList').innerHTML='<div class="panel-card text-center py-5"><i class="bi bi-shield-check" style="font-size:3rem;color:#10B981;"></i><h5 class="mt-3" style="color:var(--text);">No open disputes! 🎉</h5></div>';return;}
+        document.getElementById('disputesList').innerHTML=d.disputes.map(dp=>`
+            <div class="dispute-card" style="border-left:4px solid ${dp.resolved?'#10B981':'#EF4444'};">
+                <div class="d-flex justify-content-between align-items-start mb-1">
+                    <div><strong style="font-size:1rem;">${dp.session}</strong>
+                    <div style="font-size:0.8rem;color:var(--text-sec);">${dp.learner} vs ${dp.tutor} · ${dp.skill} · <strong>${dp.credits}</strong> credits</div></div>
+                    <span class="b-role ${dp.resolved?'b-completed':'b-disputed'}">${dp.resolved?'Resolved':'Open'}</span>
+                </div>
+                <div class="dispute-reason"><strong>Reason:</strong> ${dp.reason}</div>
+                ${!dp.resolved?`<div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-success" style="border-radius:10px;" onclick="resolveDispute(${dp.id},'release')"><i class="bi bi-check-circle"></i> Release to Tutor</button>
+                    <button class="btn btn-sm btn-danger" style="border-radius:10px;" onclick="resolveDispute(${dp.id},'refund')"><i class="bi bi-arrow-counterclockwise"></i> Refund to Learner</button>
+                </div>`:''}
+                <small style="color:var(--text-muted);margin-top:8px;display:block;">${dp.created}</small>
+            </div>`).join('');
+    });
+}
+function resolveDispute(id,a){
+    if(!confirm(a==='release'?'Release credits to tutor?':'Refund credits to learner?'))return;
+    post('/panel/api/dispute/'+id+'/action/',{action:a}).then(d=>{if(d.success){showToast(d.message);loadDisputes();loadDashboard();}});
+}
+
+// ANNOUNCEMENTS
+function sendAnnouncement(){
+    const t=document.getElementById('announcTitle').value.trim(),m=document.getElementById('announcMsg').value.trim(),tg=document.getElementById('announcTarget').value;
+    if(!t||!m)return alert('Fill title and message');
+    post('/panel/api/notifications/send/',{title:t,message:m,target:tg}).then(d=>{
+        if(d.success){document.getElementById('announcResult').innerHTML=`<div class="alert alert-success py-2" style="font-size:0.85rem;border-radius:10px;">${d.message}</div>`;document.getElementById('announcTitle').value='';document.getElementById('announcMsg').value='';}
+    });
+}
+
+// ANALYTICS
+let chartsLoaded=false;
+function loadAnalytics(){
+    if(chartsLoaded)return;chartsLoaded=true;
+    api('/panel/api/analytics/').then(d=>{
+        new Chart(document.getElementById('chartUserGrowth'),{type:'bar',data:{labels:d.user_growth.map(x=>x.label),datasets:[{label:'New Users',data:d.user_growth.map(x=>x.value),backgroundColor:'rgba(78,205,196,0.7)',borderRadius:6}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}});
+        new Chart(document.getElementById('chartBookings'),{type:'line',data:{labels:d.booking_trend.map(x=>x.label),datasets:[{label:'Bookings',data:d.booking_trend.map(x=>x.value),borderColor:'#EC4899',backgroundColor:'rgba(236,72,153,0.1)',fill:true,tension:.4}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}});
+        const colors=['#4ECDC4','#667eea','#F59E0B','#EF4444','#8B5CF6','#EC4899','#06B6D4','#f093fb','#10B981','#3B82F6'];
+        new Chart(document.getElementById('chartSkills'),{type:'doughnut',data:{labels:d.skill_popularity.map(x=>x.label),datasets:[{data:d.skill_popularity.map(x=>x.value),backgroundColor:colors}]},options:{responsive:true,plugins:{legend:{position:'right',labels:{font:{size:11}}}}}});
+        document.getElementById('topTutorsList').innerHTML=d.top_tutors.map((t,i)=>`
+            <div style="padding:12px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+                <div><span style="color:var(--text-muted);font-size:0.8rem;margin-right:8px;font-weight:700;">#${i+1}</span>
+                <strong>${t.name}</strong> <small style="color:#F59E0B;margin-left:6px;">${t.rating}/5 ★ (${t.reviews})</small></div>
+                <strong style="color:#10B981;">${t.earnings} credits</strong>
+            </div>`).join('')||'<div class="text-center py-3 text-muted">No data yet</div>';
+
+        // Revenue Trend Chart
+        new Chart(document.getElementById('chartRevenue'),{type:'bar',data:{
+            labels:d.revenue_trend.map(x=>x.label),
+            datasets:[
+                {label:'₹ Revenue',data:d.revenue_trend.map(x=>x.revenue),backgroundColor:'rgba(16,185,129,0.7)',borderRadius:6},
+                {label:'Credits Sold',data:d.revenue_trend.map(x=>x.credits),backgroundColor:'rgba(78,205,196,0.4)',borderRadius:6}
+            ]
+        },options:{responsive:true,plugins:{legend:{labels:{font:{size:10}}}},scales:{y:{beginAtZero:true}}}});
+
+        // Revenue Summary Stats
+        var rv=d.revenue;
+        document.getElementById('revenueStats').innerHTML=`
+            <div style="flex:1;text-align:center;padding:10px;background:rgba(16,185,129,0.08);border-radius:10px;">
+                <div style="font-size:1.2rem;font-weight:800;color:#10B981;">₹${rv.total_revenue}</div>
+                <div style="font-size:0.65rem;color:var(--text-muted);text-transform:uppercase;">Total Revenue</div>
+            </div>
+            <div style="flex:1;text-align:center;padding:10px;background:rgba(78,205,196,0.08);border-radius:10px;">
+                <div style="font-size:1.2rem;font-weight:800;color:#4ECDC4;">${rv.total_credits_sold}</div>
+                <div style="font-size:0.65rem;color:var(--text-muted);text-transform:uppercase;">Credits Sold</div>
+            </div>
+            <div style="flex:1;text-align:center;padding:10px;background:rgba(59,130,246,0.08);border-radius:10px;">
+                <div style="font-size:1.2rem;font-weight:800;color:#3B82F6;">${rv.total_orders}</div>
+                <div style="font-size:0.65rem;color:var(--text-muted);text-transform:uppercase;">Paid Orders</div>
+            </div>
+        `;
+
+        // Recent Payments List
+        document.getElementById('recentPaymentsList').innerHTML=d.recent_payments.map(function(p){
+            var statusCls=p.status==='paid'?'b-completed':p.status==='failed'?'b-disputed':'b-upcoming';
+            var statusIcon=p.status==='paid'?'check-circle-fill':p.status==='failed'?'x-circle-fill':'clock-fill';
+            return '<div style="padding:10px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:8px;">'
+                +'<div style="flex:1;min-width:0;"><strong style="font-size:0.85rem;">'+p.user+'</strong>'
+                +'<div style="font-size:0.7rem;color:var(--text-muted);">'+p.date+'</div></div>'
+                +'<div style="text-align:right;"><span style="color:#10B981;font-weight:700;">₹'+p.amount+'</span>'
+                +' → <span style="color:#4ECDC4;font-weight:700;">'+p.credits+' cr</span>'
+                +'<div><span class="b-role '+statusCls+'" style="font-size:0.6rem;"><i class="bi bi-'+statusIcon+'"></i> '+p.status+'</span></div></div></div>';
+        }).join('')||'<div class="text-center py-4" style="color:var(--text-muted);"><i class="bi bi-receipt" style="font-size:1.5rem;"></i><p class="small mt-2">No payments yet</p></div>';
+    });
+}
+
+// REPORTS
+function loadReports(){
+    api('/panel/api/reports/').then(d=>{
+        document.getElementById('reportBadge').textContent=d.reports.filter(r=>!['valid','invalid'].includes(r.verdict)).length;
+        if(!d.reports.length){
+            document.getElementById('reportsList').innerHTML='<div class="panel-card text-center py-5"><i class="bi bi-shield-check" style="font-size:3rem;color:#10B981;"></i><h5 class="mt-3">No reports!</h5></div>';
+            return;
+        }
+        document.getElementById('reportsList').innerHTML=d.reports.map(r=>{
+            var verdictColor=r.verdict==='likely_valid'||r.verdict==='valid'?'#EF4444':r.verdict==='likely_invalid'||r.verdict==='invalid'?'#10B981':'#F59E0B';
+            var flags=[];
+            if(r.flag_no_show)flags.push('<span style="background:rgba(239,68,68,0.1);color:#EF4444;padding:2px 8px;border-radius:12px;font-size:0.65rem;font-weight:600;">🚫 No-Show</span>');
+            if(r.flag_short_session)flags.push('<span style="background:rgba(245,158,11,0.1);color:#D97706;padding:2px 8px;border-radius:12px;font-size:0.65rem;font-weight:600;">⏱ Short Session</span>');
+            if(r.flag_no_engagement)flags.push('<span style="background:rgba(139,92,246,0.1);color:#7C3AED;padding:2px 8px;border-radius:12px;font-size:0.65rem;font-weight:600;">💤 Low Engagement</span>');
+            if(r.flag_payment_issue)flags.push('<span style="background:rgba(236,72,153,0.1);color:#DB2777;padding:2px 8px;border-radius:12px;font-size:0.65rem;font-weight:600;">💳 Payment Issue</span>');
+            if(r.flag_repeat_offender)flags.push('<span style="background:rgba(239,68,68,0.1);color:#DC2626;padding:2px 8px;border-radius:12px;font-size:0.65rem;font-weight:600;">⚠️ Repeat Offender</span>');
+
+            var ts=r.tutor_stats;
+            var isResolved=['valid','invalid'].includes(r.verdict);
+
+            return `<div class="panel-card" style="border-left:4px solid ${verdictColor};margin-bottom:16px;">
+                <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
+                    <div>
+                        <strong style="font-size:1.05rem;">${r.report_type}</strong>
+                        <span class="b-role" style="background:${verdictColor}20;color:${verdictColor};margin-left:8px;">${r.verdict_display}</span>
+                        <div style="font-size:0.8rem;color:var(--text-muted);margin-top:2px;">${r.reporter} → ${r.tutor} · ${r.session} · ${r.skill}</div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div style="font-size:2rem;font-weight:800;color:${verdictColor};line-height:1;">${r.auto_score}</div>
+                        <div style="font-size:0.6rem;color:var(--text-muted);">AUTO SCORE</div>
+                    </div>
+                </div>
+
+                <div style="background:var(--bg-sec,#E8EFF7);border-radius:10px;padding:12px;margin-bottom:12px;font-size:0.85rem;color:var(--text-sec,#718096);">
+                    "${r.description}"
+                    ${r.evidence_link?'<br><a href="'+r.evidence_link+'" target="_blank" style="color:#4ECDC4;font-size:0.8rem;">📎 Evidence Link</a>':''}
+                    ${r.has_evidence_file?'<br><a href="'+r.evidence_file_url+'" target="_blank" style="color:#4ECDC4;font-size:0.8rem;">📁 Evidence File</a>':''}
+                </div>
+
+                <!-- Flags -->
+                ${flags.length?'<div class="d-flex flex-wrap gap-1 mb-3">'+flags.join('')+'</div>':''}
+
+                <!-- Session Data Grid -->
+                <div class="row g-2 mb-3">
+                    <div class="col-6 col-md-3"><div style="background:var(--bg-sec,#E8EFF7);border-radius:8px;padding:8px;text-align:center;"><div style="font-weight:700;font-size:0.95rem;">${r.session_date}</div><div style="font-size:0.6rem;color:var(--text-muted);">Date</div></div></div>
+                    <div class="col-6 col-md-3"><div style="background:var(--bg-sec,#E8EFF7);border-radius:8px;padding:8px;text-align:center;"><div style="font-weight:700;font-size:0.95rem;">${r.scheduled_time}</div><div style="font-size:0.6rem;color:var(--text-muted);">Scheduled</div></div></div>
+                    <div class="col-6 col-md-3"><div style="background:var(--bg-sec,#E8EFF7);border-radius:8px;padding:8px;text-align:center;"><div style="font-weight:700;font-size:0.95rem;">${r.actual_duration}m</div><div style="font-size:0.6rem;color:var(--text-muted);">Duration</div></div></div>
+                    <div class="col-6 col-md-3"><div style="background:var(--bg-sec,#E8EFF7);border-radius:8px;padding:8px;text-align:center;"><div style="font-weight:700;font-size:0.95rem;">${r.tutor_joined?'✅':'❌'}</div><div style="font-size:0.6rem;color:var(--text-muted);">Tutor Joined</div></div></div>
+                    <div class="col-6 col-md-3"><div style="background:var(--bg-sec,#E8EFF7);border-radius:8px;padding:8px;text-align:center;"><div style="font-weight:700;font-size:0.95rem;">${r.chat_messages}</div><div style="font-size:0.6rem;color:var(--text-muted);">Chat Msgs</div></div></div>
+                    <div class="col-6 col-md-3"><div style="background:var(--bg-sec,#E8EFF7);border-radius:8px;padding:8px;text-align:center;"><div style="font-weight:700;font-size:0.95rem;">${r.credits}</div><div style="font-size:0.6rem;color:var(--text-muted);">Credits</div></div></div>
+                    <div class="col-6 col-md-3"><div style="background:var(--bg-sec,#E8EFF7);border-radius:8px;padding:8px;text-align:center;"><div style="font-weight:700;font-size:0.95rem;">${r.has_zoom?'✅':'❌'}</div><div style="font-size:0.6rem;color:var(--text-muted);">Zoom</div></div></div>
+                    <div class="col-6 col-md-3"><div style="background:var(--bg-sec,#E8EFF7);border-radius:8px;padding:8px;text-align:center;"><div style="font-weight:700;font-size:0.95rem;">${r.learner_msgs}/${r.tutor_msgs}</div><div style="font-size:0.6rem;color:var(--text-muted);">L/T Msgs</div></div></div>
+                </div>
+
+                <!-- Tutor History -->
+                <div style="background:rgba(78,205,196,0.06);border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:0.8rem;">
+                    <strong>Tutor History:</strong>
+                    ⭐ ${ts.avg_rating}/5 · 📚 ${ts.total_sessions} sessions · 📊 Trust: ${ts.trust_score}/100 · 🚩 ${ts.total_reports} reports (${ts.valid_reports} valid)
+                </div>
+
+                <!-- Tutor Response -->
+                ${r.tutor_response?`<div style="background:#FFF8E1;border-radius:10px;padding:12px;margin-bottom:12px;border-left:4px solid #F59E0B;">
+                    <strong style="font-size:0.85rem;"><i class="bi bi-person"></i> Tutor Response:</strong>
+                    <div style="font-size:0.82rem;color:#555;margin-top:4px;">"${r.tutor_response}"</div>
+                    ${r.has_tutor_evidence?'<a href="'+r.tutor_evidence_url+'" target="_blank" style="color:#4ECDC4;font-size:0.8rem;">📁 Tutor Evidence</a>':''}
+                    <div style="font-size:0.7rem;color:#999;margin-top:4px;">Responded: ${r.tutor_responded_at}</div>
+                </div>`:''}
+
+                <!-- System Verdict -->
+                <div style="background:${verdictColor}10;border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:0.82rem;border-left:4px solid ${verdictColor};">
+                    <strong style="color:${verdictColor};">System: ${r.verdict_display}</strong>
+                    <div style="color:var(--text-sec,#718096);margin-top:2px;">${r.verdict_reason}</div>
+                </div>
+
+                <!-- Admin Actions -->
+                ${!isResolved?`<div class="d-flex gap-2 flex-wrap">
+                    <button class="btn btn-sm" style="background:#10B981;color:#fff;border:none;border-radius:8px;font-weight:600;" onclick="reportAction(${r.id},'mark_valid')"><i class="bi bi-check-circle"></i> Mark Valid (Refund)</button>
+                    <button class="btn btn-sm" style="background:#EF4444;color:#fff;border:none;border-radius:8px;font-weight:600;" onclick="reportAction(${r.id},'mark_invalid')"><i class="bi bi-x-circle"></i> Mark Invalid (Dismiss)</button>
+                    ${r.verdict!=='tutor_response_pending'?`<button class="btn btn-sm" style="background:#F59E0B;color:#fff;border:none;border-radius:8px;font-weight:600;" onclick="reportAction(${r.id},'request_tutor_response')"><i class="bi bi-person-exclamation"></i> Request Tutor Response</button>`:'<span class="b-role" style="background:#F59E0B20;color:#F59E0B;">⏳ Awaiting Tutor Response</span>'}
+                    <div class="w-100 mt-2"><textarea class="search-admin w-100" id="adminNotes${r.id}" placeholder="Admin notes..." rows="1" style="font-size:0.8rem;"></textarea></div>
+                </div>`:`<div style="font-size:0.82rem;color:#10B981;font-weight:600;"><i class="bi bi-check-circle-fill"></i> Resolved: ${r.resolved_at}${r.admin_notes?' · Notes: '+r.admin_notes:''}</div>`}
+            </div>`;
+        }).join('');
+    });
+}
+function reportAction(id,action){
+    var notes=document.getElementById('adminNotes'+id);
+    var msg=action==='mark_valid'?'Mark this report VALID? Learner will be refunded.':action==='mark_invalid'?'Dismiss this report?':'Request tutor response?';
+    if(!confirm(msg))return;
+    post('/panel/api/report/'+id+'/action/',{action:action,admin_notes:notes?notes.value:''}).then(d=>{
+        if(d.success){showToast(d.message);loadReports();}else alert(d.error);
+    });
+}
+
+// TOAST
+function showToast(msg){
+    const t=document.createElement('div');
+    t.style.cssText='position:fixed;top:20px;right:20px;z-index:99999;padding:12px 24px;border-radius:12px;background:var(--gradient-teal);color:#fff;font-weight:600;font-size:0.9rem;box-shadow:0 4px 20px rgba(78,205,196,0.4);';
+    t.innerHTML='<i class="bi bi-check-circle-fill me-2"></i>'+msg;document.body.appendChild(t);
+    setTimeout(()=>{t.style.opacity='0';t.style.transition='opacity .3s';setTimeout(()=>t.remove(),300);},3000);
+}
+
+loadDashboard();
+</script>
+    <script src="{% static 'js/dark-mode.js' %}"></script>
+</body>
+</html>

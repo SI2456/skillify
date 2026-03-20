@@ -1,0 +1,291 @@
+/* ============================================
+   Skillify Global Mobile & Responsive CSS
+   Include on every page after page-specific CSS
+   ============================================ */
+
+/* ===== BASE MOBILE FIXES ===== */
+* { -webkit-tap-highlight-color: transparent; }
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+body { overflow-x: hidden; }
+img { max-width: 100%; height: auto; }
+
+/* ===== NAVBAR MOBILE ===== */
+@media (max-width: 991px) {
+    .navbar { padding: 0.6rem 0; }
+    .navbar-brand { font-size: 1.2rem !important; }
+    .navbar-brand i { font-size: 1.4rem !important; }
+    .navbar-collapse { 
+        background: var(--card-bg, #fff); padding: 12px 0; margin-top: 8px;
+        border-top: 1px solid var(--border-color, #e2e8f0);
+    }
+    .navbar-nav { gap: 0 !important; }
+    .navbar-nav .nav-link { padding: 10px 16px !important; border-radius: 8px; }
+    .navbar-nav .nav-item { width: 100%; }
+    .dropdown-menu { border: none; box-shadow: none; padding-left: 16px; }
+    .role-indicator { font-size: 0.65rem; padding: 2px 8px; }
+    
+    /* Notification dropdown on mobile */
+    #notifPanel { right: -20px !important; width: 300px !important; }
+}
+
+/* ===== THEME TOGGLE MOBILE ===== */
+@media (max-width: 767px) {
+    .theme-toggle {
+        width: 40px !important; height: 40px !important; font-size: 1rem !important;
+        top: 12px !important; right: 12px !important;
+        bottom: auto !important;
+    }
+}
+
+/* ===== DASHBOARD MOBILE ===== */
+@media (max-width: 991px) {
+    .welcome-header { flex-direction: column !important; }
+    .welcome-content h2 { font-size: 1.4rem !important; }
+    .role-switch-card { width: 100%; flex-direction: column; gap: 0.75rem; text-align: center; }
+    .quick-switch-widget { width: 100%; }
+}
+
+@media (max-width: 767px) {
+    .dashboard-container { padding-top: 0.5rem !important; }
+    .container-fluid { padding-left: 12px !important; padding-right: 12px !important; }
+    .widget-card { padding: 1rem !important; border-radius: 12px !important; }
+    .stat-card { flex-direction: column; text-align: center; padding: 1rem !important; }
+    .stat-icon { width: 45px; height: 45px; font-size: 1.2rem; margin: 0 auto 0.5rem; }
+    .stat-content h3 { font-size: 1.5rem !important; }
+    .sessions-timeline .session-item { flex-direction: column; }
+    .session-time { min-width: auto; flex-direction: row; display: flex; gap: 8px; align-items: center; }
+    .action-buttons .btn { font-size: 0.82rem; padding: 0.5rem 0.75rem; }
+}
+
+/* ===== BROWSE SKILLS MOBILE ===== */
+@media (max-width: 991px) {
+    .browse-container .container { padding: 0 12px; }
+    .search-bar-wrapper { flex-direction: column; }
+    .search-input-group { flex-direction: column; gap: 8px; }
+    .search-input { border-radius: 10px !important; }
+    .search-btn { border-radius: 10px !important; width: 100%; }
+}
+
+@media (max-width: 767px) {
+    .page-header h2 { font-size: 1.3rem !important; }
+    .quick-categories { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 8px; }
+    .quick-categories::-webkit-scrollbar { display: none; }
+    .category-pill { white-space: nowrap; flex-shrink: 0; }
+    .tutors-grid { grid-template-columns: 1fr !important; }
+    .tutor-card { margin-bottom: 12px; }
+    
+    /* Filter row mobile */
+    .d-flex.flex-wrap.gap-2.mt-3 { 
+        flex-direction: column !important; 
+    }
+    .d-flex.flex-wrap.gap-2.mt-3 select,
+    .d-flex.flex-wrap.gap-2.mt-3 input,
+    .d-flex.flex-wrap.gap-2.mt-3 .btn {
+        width: 100% !important; min-width: 100% !important; max-width: 100% !important;
+    }
+    .d-flex.flex-wrap.gap-2.mt-3 .d-flex.align-items-center.gap-1 {
+        width: 100%; flex-direction: row;
+    }
+    .d-flex.flex-wrap.gap-2.mt-3 .d-flex.align-items-center.gap-1 input {
+        flex: 1; min-width: 0 !important;
+    }
+}
+
+/* ===== SESSION CARDS MOBILE ===== */
+@media (max-width: 767px) {
+    .session-card { padding: 1rem !important; border-radius: 12px !important; }
+    .session-participants { flex-direction: column !important; gap: 0.75rem !important; }
+    .session-direction { transform: rotate(90deg); }
+    .participant-avatar { width: 50px !important; height: 50px !important; }
+    .session-info-grid { grid-template-columns: 1fr !important; gap: 0.5rem !important; }
+    .session-actions { flex-direction: column !important; }
+    .session-actions .btn { width: 100% !important; }
+    .session-status-badge { position: static !important; margin-bottom: 8px; display: inline-flex; }
+    .review-needed-badge { position: static !important; margin-bottom: 8px; display: inline-flex; }
+}
+
+/* ===== CHAT MOBILE ===== */
+@media (max-width: 767px) {
+    .chat-wrapper { height: 100vh; height: 100dvh; }
+    .chat-header { padding: 8px 12px !important; gap: 8px !important; }
+    .chat-header .btn { font-size: 0.7rem; padding: 4px 8px; }
+    .chat-avatar { width: 36px !important; height: 36px !important; }
+    .chat-user-name { font-size: 0.9rem !important; }
+    .chat-messages { padding: 12px !important; }
+    .message-row { max-width: 88% !important; }
+    .message-bubble { padding: 8px 14px !important; font-size: 0.85rem !important; }
+    .msg-avatar { width: 26px !important; height: 26px !important; }
+    .chat-input-area { padding: 10px 12px !important; gap: 8px !important; }
+    .chat-input-area textarea { padding: 8px 14px !important; font-size: 0.85rem !important; }
+    .attach-btn { width: 36px !important; height: 36px !important; font-size: 0.95rem !important; }
+    .send-btn { width: 40px !important; height: 40px !important; }
+    .chat-attach-img { max-width: 180px !important; }
+}
+
+/* ===== INBOX MOBILE ===== */
+@media (max-width: 767px) {
+    .inbox-container .page-header { padding: 16px 0 !important; }
+    .inbox-container .page-header h2 { font-size: 1.3rem; }
+    .conversation-card { padding: 12px !important; }
+    .conv-avatar { width: 42px !important; height: 42px !important; }
+    .conv-name { font-size: 0.9rem; }
+    .new-chat-card { padding: 16px !important; }
+    .contact-avatar { width: 36px !important; height: 36px !important; }
+}
+
+/* ===== TUTOR PROFILE MOBILE ===== */
+@media (max-width: 991px) {
+    .tutor-profile .row { flex-direction: column-reverse; }
+}
+
+@media (max-width: 767px) {
+    .tutor-profile .card { margin-bottom: 12px !important; border-radius: 12px !important; }
+    .slot-btn { font-size: 0.75rem !important; padding: 4px 8px !important; min-width: 55px !important; }
+    .calendar-day { min-width: 80px; }
+    .calendar-slots { gap: 4px !important; }
+    .tab-content { padding: 0 !important; }
+    
+    /* Booking panel mobile */
+    .booking-panel { width: 100% !important; position: fixed !important; bottom: 0; left: 0; right: 0;
+        border-radius: 20px 20px 0 0 !important; max-height: 70vh; overflow-y: auto; z-index: 999; }
+    
+    /* Review section */
+    .star-rating { font-size: 1.5rem !important; }
+    .star-rating i { font-size: 1.5rem !important; }
+}
+
+/* ===== WALLET MOBILE ===== */
+@media (max-width: 767px) {
+    .wallet-card { border-radius: 12px !important; }
+    .wallet-balance h2 { font-size: 2rem !important; }
+    .package-card { padding: 14px 10px !important; }
+    .pkg-credits { font-size: 1.6rem !important; }
+    .pkg-price { font-size: 1rem !important; }
+    .transaction-table { font-size: 0.75rem; }
+    .transaction-table th { font-size: 0.65rem; padding: 6px 8px; }
+    .transaction-table td { padding: 8px; }
+    
+    /* Stack payment history columns */
+    .transaction-table code { font-size: 0.6rem !important; word-break: break-all; }
+}
+
+/* ===== CREATE SESSION MOBILE ===== */
+@media (max-width: 767px) {
+    .create-session-container .card { border-radius: 12px !important; }
+    .create-session-container .card-body { padding: 16px !important; }
+}
+
+/* ===== EARNINGS DASHBOARD MOBILE ===== */
+@media (max-width: 767px) {
+    .stat-card .stat-value, .stat-card-a .stat-val { font-size: 1.4rem !important; }
+    .chart-card, .chart-box { padding: 14px !important; }
+    canvas { max-height: 200px !important; }
+}
+
+/* ===== MANAGE AVAILABILITY MOBILE ===== */
+@media (max-width: 767px) {
+    .slot-card { flex-direction: column; gap: 8px; text-align: center; }
+    .slot-card form { width: 100%; }
+    .slot-card .btn { width: 100%; }
+}
+
+/* ===== AUTH PAGES MOBILE (login, register, otp, forgot) ===== */
+@media (max-width: 767px) {
+    .auth-container { min-height: auto; }
+    .left-panel { display: none !important; }
+    .right-panel { padding: 1.5rem 1rem !important; }
+    .auth-form-container { max-width: 100%; }
+    .auth-header h2 { font-size: 1.5rem; }
+    .role-selection { grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    .role-card { padding: 1rem 0.75rem; }
+    .role-icon { width: 40px; height: 40px; font-size: 1.2rem; }
+}
+
+/* ===== ADMIN PANEL MOBILE ===== */
+@media (max-width: 991px) {
+    .sidebar { width: 220px; }
+    .main-content { margin-left: 220px; padding: 16px; }
+}
+
+@media (max-width: 767px) {
+    .sidebar { 
+        position: fixed; left: -260px; width: 260px; transition: left 0.3s;
+        z-index: 1000; box-shadow: 4px 0 20px rgba(0,0,0,0.15);
+    }
+    .sidebar.open { left: 0; }
+    .main-content { margin-left: 0 !important; padding: 12px !important; }
+    .page-title { font-size: 1.2rem !important; }
+    .stat-card-a { padding: 14px !important; }
+    .stat-val { font-size: 1.4rem !important; }
+    .admin-table { font-size: 0.72rem; }
+    .admin-table th { font-size: 0.6rem; padding: 6px 8px; }
+    .admin-table td { padding: 6px 8px; }
+    .avatar-sm { width: 24px !important; height: 24px !important; margin-right: 4px !important; }
+    .btn-xs { font-size: 0.6rem; padding: 2px 6px; }
+    .chart-box { padding: 12px !important; }
+    .dispute-card { padding: 14px !important; }
+    .search-admin { font-size: 0.8rem; padding: 7px 10px; }
+}
+
+/* ===== MODALS MOBILE ===== */
+@media (max-width: 767px) {
+    /* Reschedule modal + any fixed modals */
+    [id^="rescheduleModal"] > div,
+    .modal-dialog,
+    [style*="position:fixed"] > [style*="max-width"] {
+        max-width: 95vw !important; width: 95vw !important;
+        margin: 10px auto; padding: 20px !important;
+        max-height: 85vh; overflow-y: auto;
+    }
+}
+
+/* ===== NOTIFICATION PANEL MOBILE ===== */
+@media (max-width: 767px) {
+    .notif-panel, #notifPanel {
+        position: fixed !important; top: auto !important; bottom: 0 !important;
+        left: 0 !important; right: 0 !important; width: 100% !important;
+        max-height: 70vh !important; border-radius: 20px 20px 0 0 !important;
+    }
+}
+
+/* ===== CHATBOT WIDGET MOBILE ===== */
+@media (max-width: 767px) {
+    #chatbotToggle { width: 50px !important; height: 50px !important; bottom: 16px !important; right: 16px !important; }
+    #chatbotWindow { 
+        right: 0 !important; left: 0 !important; bottom: 0 !important;
+        width: 100% !important; max-height: 80vh !important;
+        border-radius: 20px 20px 0 0 !important;
+    }
+}
+
+/* ===== TABLES RESPONSIVE ===== */
+@media (max-width: 767px) {
+    .table-responsive { -webkit-overflow-scrolling: touch; }
+    .table { white-space: nowrap; }
+    .table td, .table th { white-space: nowrap; }
+}
+
+/* ===== GENERAL SPACING ===== */
+@media (max-width: 767px) {
+    .py-4 { padding-top: 1rem !important; padding-bottom: 1rem !important; }
+    .mb-4 { margin-bottom: 1rem !important; }
+    .g-4 { --bs-gutter-y: 0.75rem !important; --bs-gutter-x: 0.75rem !important; }
+    h2 { font-size: 1.3rem !important; }
+    h5 { font-size: 1rem !important; }
+    .btn { font-size: 0.85rem; padding: 8px 14px; }
+    .badge { font-size: 0.65rem !important; }
+}
+
+/* ===== SAFE AREA (iOS notch) ===== */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+    .chat-input-area { padding-bottom: calc(14px + env(safe-area-inset-bottom)); }
+    .sidebar { padding-bottom: env(safe-area-inset-bottom); }
+}
+
+/* ===== TOUCH IMPROVEMENTS ===== */
+@media (hover: none) and (pointer: coarse) {
+    .btn, .nav-link, .slot-btn, .package-card, a { min-height: 44px; }
+    .slot-btn { min-height: 36px; min-width: 60px; }
+    .form-control, .form-select, .search-admin { min-height: 44px; font-size: 16px !important; }
+    textarea.form-control { font-size: 16px !important; }
+}

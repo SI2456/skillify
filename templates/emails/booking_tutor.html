@@ -1,0 +1,44 @@
+{% extends "emails/base_email.html" %}
+{% block content %}
+<h2 style="margin:0 0 16px;color:#333;font-size:20px;">🎉 New Booking!</h2>
+<p style="color:#555;font-size:15px;line-height:1.6;margin:0 0 20px;">
+    Hi <strong>{{ tutor_name }}</strong>, great news! A learner has booked your session.
+</p>
+
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f8f9fa;border-radius:12px;padding:20px;margin-bottom:20px;">
+    <tr><td style="padding:8px 16px;">
+        <table width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+                <td style="padding:6px 0;color:#888;font-size:13px;width:100px;">📚 Session</td>
+                <td style="padding:6px 0;color:#333;font-size:14px;font-weight:600;">{{ session_title }}</td>
+            </tr>
+            <tr>
+                <td style="padding:6px 0;color:#888;font-size:13px;">📅 Date</td>
+                <td style="padding:6px 0;color:#333;font-size:14px;font-weight:600;">{{ session_date }}</td>
+            </tr>
+            <tr>
+                <td style="padding:6px 0;color:#888;font-size:13px;">🕐 Time</td>
+                <td style="padding:6px 0;color:#333;font-size:14px;font-weight:600;">{{ session_time }}</td>
+            </tr>
+            <tr>
+                <td style="padding:6px 0;color:#888;font-size:13px;">👤 Learner</td>
+                <td style="padding:6px 0;color:#333;font-size:14px;font-weight:600;">{{ learner_name }} ({{ learner_email }})</td>
+            </tr>
+            <tr>
+                <td style="padding:6px 0;color:#888;font-size:13px;">💰 Credits</td>
+                <td style="padding:6px 0;color:#667eea;font-size:14px;font-weight:700;">{{ credits }}</td>
+            </tr>
+            <tr>
+                <td style="padding:6px 0;color:#888;font-size:13px;">🏷️ Skill</td>
+                <td style="padding:6px 0;color:#333;font-size:14px;font-weight:600;">{{ skill_name }}</td>
+            </tr>
+        </table>
+    </td></tr>
+</table>
+
+<div style="text-align:center;margin:24px 0;">
+    <a href="{{ site_url }}/my-sessions/" style="display:inline-block;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;text-decoration:none;padding:12px 32px;border-radius:10px;font-weight:700;font-size:14px;">View My Sessions</a>
+</div>
+
+<p style="color:#888;font-size:13px;margin:0;">Happy teaching! 🚀 — The Skillify Team</p>
+{% endblock %}

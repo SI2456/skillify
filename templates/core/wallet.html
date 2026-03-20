@@ -1,0 +1,373 @@
+{% load static %}
+{% load wallet_tags %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wallet & Credits - Skillify</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/wallet.css' %}">
+    <link rel="icon" type="image/svg+xml" href="{% static 'favicon.svg' %}">
+    <link rel="stylesheet" href="{% static 'css/dark-mode.css' %}
+    <link rel="stylesheet" href="{% static 'css/mobile.css' %}">">
+</head>
+<body>
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme"><i class="bi bi-moon-stars-fill"></i></button>
+
+    <nav class="navbar navbar-expand-lg navbar-light sticky-top">
+        <div class="container-fluid px-4">
+            <a class="navbar-brand" href="{% url 'index' %}"><i class="bi bi-lightbulb-fill"></i><span>Skillify</span></a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"><span class="navbar-toggler-icon"></span></button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item"><a class="nav-link" href="{% url 'dashboard' %}"><i class="bi bi-house-door"></i> Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'browse_skills' %}"><i class="bi bi-search"></i> Browse Skills</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'my_sessions' %}"><i class="bi bi-camera-video"></i> My Sessions</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="{% url 'wallet' %}"><i class="bi bi-wallet2"></i> Wallet</a></li>
+                    <li class="nav-item">{% include "core/notification_widget.html" %}</li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <img src="{{ request.user.profile.avatar_url }}" class="user-avatar" alt="User" style="width:32px;height:32px;border-radius:50%;object-fit:cover;">
+                            <span class="role-indicator">{{ profile.get_role_display }}</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="{% url 'switch_role' %}"><i class="bi bi-arrow-left-right"></i> Switch Role</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{% url 'edit_tutor_profile' %}"><i class="bi bi-person-gear"></i> Edit Profile</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="{% url 'logout' %}"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="wallet-container">
+        <div class="container-fluid px-4 py-4">
+            <div class="page-header mb-4">
+                <h2 class="fw-bold mb-2"><i class="bi bi-wallet2"></i> My Wallet</h2>
+                <p class="text-muted mb-0">Manage your credits and transactions</p>
+            </div>
+
+            <!-- Wallet Card -->
+            <div class="row g-4 mb-4">
+                <div class="col-lg-5">
+                    <div class="wallet-card learner-wallet">
+                        <div class="wallet-card-header">
+                            <div class="wallet-icon learner-icon"><i class="bi bi-wallet2"></i></div>
+                            <div class="wallet-info"><h5>My Wallet</h5><p>Credits for booking & earning</p></div>
+                        </div>
+                        <div class="wallet-balance">
+                            <small>Available Balance</small>
+                            <h2 id="walletBalance">{{ wallet.balance }}</h2>
+                            <span class="balance-label">credits</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Top-Up Packages -->
+                <div class="col-lg-7">
+                    <div class="widget-card" style="border:2px solid var(--border-color);border-radius:16px;padding:1.5rem;">
+                        <h5 style="font-weight:700;margin-bottom:1rem;"><i class="bi bi-plus-circle" style="color:var(--primary-color);"></i> Top Up Credits</h5>
+                        <div class="row g-3">
+                            {% for pkg in packages %}
+                            <div class="col-md-4">
+                                <div class="package-card {% if pkg.popular %}popular{% endif %}" data-pkg="{{ pkg.id }}" onclick="selectPackage('{{ pkg.id }}', {{ pkg.inr }}, {{ pkg.credits }})">
+                                    {% if pkg.popular %}<span class="popular-tag">BEST VALUE</span>{% endif %}
+                                    <div class="pkg-credits">{{ pkg.credits }}</div>
+                                    <div class="pkg-label">credits</div>
+                                    <div class="pkg-price">₹{{ pkg.inr }}</div>
+                                    <div class="pkg-rate">₹{{ pkg.inr|floatformat:0 }} per {{ pkg.credits }} credits</div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <button class="btn btn-primary w-100 mt-3" id="payBtn" disabled onclick="initiatePayment()" style="background:linear-gradient(135deg,#4ECDC4,#3BABA3);border:none;border-radius:10px;padding:12px;font-weight:700;font-size:1rem;">
+                            <i class="bi bi-credit-card"></i> <span id="payBtnText">Select a package</span>
+                        </button>
+                        <div id="paymentStatus" class="mt-2"></div>
+                        {% if not razorpay_key %}
+                        <div class="alert alert-warning mt-2 small" style="border-radius:10px;">
+                            <i class="bi bi-exclamation-triangle"></i> Razorpay not configured. Set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET environment variables.
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment History -->
+            <div class="widget-card mb-4" style="border:2px solid var(--border-color);border-radius:16px;padding:1.5rem;">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 style="font-weight:700;margin:0;"><i class="bi bi-receipt" style="color:var(--primary-color);"></i> Payment History</h5>
+                    {% if payments %}<span class="badge" style="background:rgba(78,205,196,0.12);color:#3BABA3;font-size:0.75rem;">{{ payments|length }} payment{{ payments|length|pluralize }}</span>{% endif %}
+                </div>
+                <div class="table-responsive">
+                    <table class="table transaction-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Amount Paid</th>
+                                <th>Credits Added</th>
+                                <th>Payment ID</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for p in payments %}
+                            <tr>
+                                <td>
+                                    <div style="font-weight:600;">{{ p.created_at|date:"M d, Y" }}</div>
+                                    <small style="color:var(--text-muted);">{{ p.created_at|date:"h:i A" }}</small>
+                                </td>
+                                <td style="font-weight:700;font-size:1rem;">₹{{ p.amount_inr|paise_to_rupees }}</td>
+                                <td>
+                                    <span style="color:#4ECDC4;font-weight:800;font-size:1rem;">+{{ p.credits }}</span>
+                                    <small style="color:var(--text-muted);display:block;">credits</small>
+                                </td>
+                                <td>
+                                    {% if p.razorpay_payment_id %}
+                                    <code style="font-size:0.72rem;background:var(--bg-secondary, #e8eff7);padding:3px 8px;border-radius:6px;">{{ p.razorpay_payment_id }}</code>
+                                    {% else %}
+                                    <span style="color:var(--text-muted);">—</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if p.status == 'paid' %}
+                                    <span class="badge" style="background:rgba(16,185,129,0.12);color:#10B981;padding:5px 12px;border-radius:20px;font-weight:600;">
+                                        <i class="bi bi-check-circle-fill"></i> Paid
+                                    </span>
+                                    {% elif p.status == 'failed' %}
+                                    <span class="badge" style="background:rgba(239,68,68,0.12);color:#EF4444;padding:5px 12px;border-radius:20px;font-weight:600;">
+                                        <i class="bi bi-x-circle-fill"></i> Failed
+                                    </span>
+                                    {% else %}
+                                    <span class="badge" style="background:rgba(245,158,11,0.12);color:#F59E0B;padding:5px 12px;border-radius:20px;font-weight:600;">
+                                        <i class="bi bi-clock-fill"></i> Pending
+                                    </span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center py-4">
+                                    <i class="bi bi-receipt" style="font-size:2rem;color:var(--text-muted);"></i>
+                                    <p class="mt-2 mb-0" style="color:var(--text-muted);">No payments yet. Top up credits above to get started!</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Transaction History -->
+            <div class="widget-card transaction-history" style="border:2px solid var(--border-color);border-radius:16px;padding:1.5rem;">
+                <div class="widget-header">
+                    <h5 class="mb-0"><i class="bi bi-clock-history" style="color:var(--primary-color);"></i> Transaction History</h5>
+                </div>
+                <!-- Filters -->
+                <div class="d-flex gap-2 flex-wrap mb-3">
+                    <a href="{% url 'wallet' %}" class="btn btn-sm {% if date_filter == 'all' %}btn-primary{% else %}btn-outline-secondary{% endif %}" style="border-radius:20px;font-size:0.8rem;">All Time</a>
+                    <a href="{% url 'wallet' %}?period=week{% if txn_type %}&type={{ txn_type }}{% endif %}" class="btn btn-sm {% if date_filter == 'week' %}btn-primary{% else %}btn-outline-secondary{% endif %}" style="border-radius:20px;font-size:0.8rem;">Last Week</a>
+                    <a href="{% url 'wallet' %}?period=month{% if txn_type %}&type={{ txn_type }}{% endif %}" class="btn btn-sm {% if date_filter == 'month' %}btn-primary{% else %}btn-outline-secondary{% endif %}" style="border-radius:20px;font-size:0.8rem;">Last Month</a>
+                    <a href="{% url 'wallet' %}?period=3months{% if txn_type %}&type={{ txn_type }}{% endif %}" class="btn btn-sm {% if date_filter == '3months' %}btn-primary{% else %}btn-outline-secondary{% endif %}" style="border-radius:20px;font-size:0.8rem;">3 Months</a>
+                    <a href="{% url 'wallet' %}?period=year{% if txn_type %}&type={{ txn_type }}{% endif %}" class="btn btn-sm {% if date_filter == 'year' %}btn-primary{% else %}btn-outline-secondary{% endif %}" style="border-radius:20px;font-size:0.8rem;">1 Year</a>
+                    <select onchange="window.location='{% url 'wallet' %}?period={{ date_filter }}&type='+this.value" class="form-select form-select-sm" style="width:auto;min-width:140px;border-radius:20px;font-size:0.8rem;">
+                        <option value="">All Types</option>
+                        <option value="credit" {% if txn_type == 'credit' %}selected{% endif %}>Credits</option>
+                        <option value="booking_payment" {% if txn_type == 'booking_payment' %}selected{% endif %}>Bookings</option>
+                        <option value="tutor_earning" {% if txn_type == 'tutor_earning' %}selected{% endif %}>Earnings</option>
+                        <option value="razorpay_topup" {% if txn_type == 'razorpay_topup' %}selected{% endif %}>Top-Ups</option>
+                        <option value="signup_bonus" {% if txn_type == 'signup_bonus' %}selected{% endif %}>Bonus</option>
+                    </select>
+                </div>
+                <div class="table-responsive">
+                    <table class="table transaction-table">
+                        <thead>
+                            <tr>
+                                <th>Date & Time</th>
+                                <th>Description</th>
+                                <th>Type</th>
+                                <th>Amount</th>
+                                <th>Balance After</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for txn in transactions %}
+                            <tr>
+                                <td>{{ txn.created_at|date:"M d, Y H:i" }}</td>
+                                <td>{{ txn.description }}</td>
+                                <td>
+                                    <span class="badge bg-{% if txn.transaction_type == 'tutor_earning' or txn.transaction_type == 'signup_bonus' or txn.transaction_type == 'credit' or txn.transaction_type == 'razorpay_topup' %}success{% else %}danger{% endif %}">
+                                        {{ txn.get_transaction_type_display }}
+                                    </span>
+                                </td>
+                                <td class="{% if txn.transaction_type == 'tutor_earning' or txn.transaction_type == 'signup_bonus' or txn.transaction_type == 'credit' or txn.transaction_type == 'razorpay_topup' %}text-success{% else %}text-danger{% endif %}">
+                                    {% if txn.transaction_type == 'tutor_earning' or txn.transaction_type == 'signup_bonus' or txn.transaction_type == 'credit' or txn.transaction_type == 'razorpay_topup' %}+{% else %}-{% endif %}{{ txn.amount }}
+                                </td>
+                                <td>{{ txn.balance_after }} credits</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center py-4 text-muted">
+                                    <i class="bi bi-inbox" style="font-size:2rem;"></i>
+                                    <p class="mt-2">No transactions yet</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <script src="{% static 'js/wallet.js' %}"></script>
+    {% include "core/chatbot_widget.html" %}
+    <script src="{% static 'js/dark-mode.js' %}"></script>
+
+    <style>
+    .package-card {
+        background: var(--card-bg, #fff); border: 2px solid var(--border-color, #e2e8f0);
+        border-radius: 14px; padding: 20px 16px; text-align: center; cursor: pointer;
+        transition: all 0.3s; position: relative; overflow: hidden;
+    }
+    .package-card:hover { border-color: #4ECDC4; transform: translateY(-3px); box-shadow: 0 8px 25px rgba(78,205,196,0.15); }
+    .package-card.selected { border-color: #4ECDC4; background: rgba(78,205,196,0.06); box-shadow: 0 0 0 4px rgba(78,205,196,0.15); }
+    .package-card.popular { border-color: #4ECDC4; }
+    .popular-tag { position: absolute; top: 0; right: 0; background: linear-gradient(135deg,#4ECDC4,#3BABA3); color: #fff; font-size: 0.6rem; padding: 3px 10px; border-radius: 0 12px 0 10px; font-weight: 700; letter-spacing: 0.5px; }
+    .pkg-credits { font-size: 2.2rem; font-weight: 800; color: #4ECDC4; line-height: 1; }
+    .pkg-label { font-size: 0.8rem; color: var(--text-muted, #a0aec0); margin-bottom: 8px; }
+    .pkg-price { font-size: 1.2rem; font-weight: 700; color: var(--text-primary, #2d3748); }
+    .pkg-rate { font-size: 0.7rem; color: var(--text-muted, #a0aec0); margin-top: 2px; }
+    </style>
+
+    <script>
+    let selectedPkg = null;
+    let selectedInr = 0;
+    let selectedCredits = 0;
+    const csrfToken = '{{ csrf_token }}';
+
+    function selectPackage(pkgId, inr, credits) {
+        selectedPkg = pkgId;
+        selectedInr = inr;
+        selectedCredits = credits;
+
+        // Highlight selected
+        document.querySelectorAll('.package-card').forEach(c => c.classList.remove('selected'));
+        document.querySelector('[data-pkg="'+pkgId+'"]').classList.add('selected');
+
+        // Enable pay button
+        const btn = document.getElementById('payBtn');
+        btn.disabled = false;
+        document.getElementById('payBtnText').textContent = 'Pay ₹' + inr + ' for ' + credits + ' Credits';
+    }
+
+    function initiatePayment() {
+        if (!selectedPkg) return;
+
+        const btn = document.getElementById('payBtn');
+        btn.disabled = true;
+        document.getElementById('payBtnText').innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creating order...';
+
+        fetch('/api/create-order/', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrfToken},
+            body: JSON.stringify({package_id: selectedPkg}),
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.error) {
+                document.getElementById('paymentStatus').innerHTML = '<div class="alert alert-danger py-2 small" style="border-radius:10px;"><i class="bi bi-exclamation-circle"></i> ' + data.error + '</div>';
+                btn.disabled = false;
+                document.getElementById('payBtnText').textContent = 'Pay ₹' + selectedInr + ' for ' + selectedCredits + ' Credits';
+                return;
+            }
+
+            // Open Razorpay Checkout
+            const options = {
+                key: data.key,
+                amount: data.amount,
+                currency: data.currency,
+                name: 'Skillify',
+                description: data.credits + ' Credits Top-Up',
+                order_id: data.order_id,
+                prefill: {
+                    name: data.user_name,
+                    email: data.user_email,
+                },
+                theme: {color: '#4ECDC4'},
+                handler: function(response) {
+                    verifyPayment(response);
+                },
+                modal: {
+                    ondismiss: function() {
+                        btn.disabled = false;
+                        document.getElementById('payBtnText').textContent = 'Pay ₹' + selectedInr + ' for ' + selectedCredits + ' Credits';
+                    }
+                }
+            };
+
+            const rzp = new Razorpay(options);
+            rzp.open();
+        })
+        .catch(err => {
+            document.getElementById('paymentStatus').innerHTML = '<div class="alert alert-danger py-2 small" style="border-radius:10px;">Network error. Please try again.</div>';
+            btn.disabled = false;
+            document.getElementById('payBtnText').textContent = 'Pay ₹' + selectedInr + ' for ' + selectedCredits + ' Credits';
+        });
+    }
+
+    function verifyPayment(response) {
+        document.getElementById('payBtnText').innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Verifying payment...';
+
+        fetch('/api/verify-payment/', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrfToken},
+            body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+            }),
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                // Update balance
+                document.getElementById('walletBalance').textContent = data.new_balance;
+
+                // Show success
+                document.getElementById('paymentStatus').innerHTML = `
+                    <div class="alert alert-success py-2" style="border-radius:10px;text-align:center;">
+                        <i class="bi bi-check-circle-fill" style="font-size:1.5rem;"></i><br>
+                        <strong>${data.message}</strong><br>
+                        <small>Payment ID: ${data.payment_id}</small>
+                    </div>`;
+
+                // Update button
+                const btn = document.getElementById('payBtn');
+                btn.classList.remove('btn-primary');
+                btn.style.background = '#10B981';
+                document.getElementById('payBtnText').innerHTML = '<i class="bi bi-check-circle-fill"></i> Payment Successful!';
+
+                // Reload after 2 seconds to show updated history
+                setTimeout(() => location.reload(), 2500);
+            } else {
+                document.getElementById('paymentStatus').innerHTML = '<div class="alert alert-danger py-2 small" style="border-radius:10px;"><i class="bi bi-x-circle"></i> ' + data.error + '</div>';
+                document.getElementById('payBtn').disabled = false;
+                document.getElementById('payBtnText').textContent = 'Pay ₹' + selectedInr + ' for ' + selectedCredits + ' Credits';
+            }
+        })
+        .catch(() => {
+            document.getElementById('paymentStatus').innerHTML = '<div class="alert alert-danger py-2 small" style="border-radius:10px;">Verification failed. Contact support.</div>';
+        });
+    }
+    </script>
+</body>
+</html>

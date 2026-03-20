@@ -1,0 +1,183 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Messages - Skillify</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #f5f7fa; }
+        .navbar { background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
+        .page-header { padding: 30px 0 20px; }
+        .page-header h2 { font-weight: 800; }
+
+        .conversation-card {
+            background: #fff; border-radius: 14px; padding: 16px 20px;
+            margin-bottom: 10px; display: flex; align-items: center; gap: 14px;
+            text-decoration: none; color: inherit; transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+        .conversation-card:hover { border-color: #667eea; transform: translateX(4px); color: inherit; }
+        .conversation-card.has-unread { background: #f0f0ff; border-left: 4px solid #667eea; }
+        .conv-avatar { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+        .conv-info { flex: 1; min-width: 0; }
+        .conv-name { font-weight: 700; font-size: 0.95rem; margin-bottom: 2px; }
+        .conv-last-msg { font-size: 0.82rem; color: #6c757d; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .conv-last-msg.unread-text { color: #333; font-weight: 600; }
+        .conv-meta { text-align: right; flex-shrink: 0; }
+        .conv-time { font-size: 0.72rem; color: #6c757d; }
+        .unread-badge {
+            background: #667eea; color: #fff; font-size: 0.7rem; font-weight: 700;
+            width: 22px; height: 22px; border-radius: 50%; display: flex;
+            align-items: center; justify-content: center; margin-top: 4px; margin-left: auto;
+        }
+
+        .new-chat-card {
+            background: #fff; border-radius: 14px; padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+        }
+        .contact-item {
+            display: flex; align-items: center; gap: 12px; padding: 10px 14px;
+            border-radius: 10px; text-decoration: none; color: inherit; transition: all 0.2s;
+        }
+        .contact-item:hover { background: #f0f0ff; color: inherit; }
+        .contact-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+
+        .empty-state { text-align: center; padding: 60px 20px; }
+        .empty-state i { font-size: 4rem; color: #dee2e6; }
+    </style>
+    <link rel="icon" type="image/svg+xml" href="{% static 'favicon.svg' %}">
+    <link rel="stylesheet" href="{% static 'css/dark-mode.css' %}
+    <link rel="stylesheet" href="{% static 'css/mobile.css' %}">">
+</head>
+<body>
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme" style="position:fixed;bottom:20px;right:20px;z-index:999;width:45px;height:45px;border-radius:50%;border:none;background:#667eea;color:#fff;font-size:1.2rem;cursor:pointer;box-shadow:0 4px 15px rgba(0,0,0,0.2);transition:all 0.3s;"><i class="bi bi-moon-stars-fill"></i></button>
+    <nav class="navbar navbar-expand-lg sticky-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="{% url 'index' %}"><i class="bi bi-lightbulb-fill" style="color:#667eea;"></i> Skillify</a>
+            <div class="d-flex align-items-center gap-3">
+                <a href="{% url 'dashboard' %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-speedometer2"></i> Dashboard</a>
+                <a href="{% url 'inbox' %}" class="btn btn-sm btn-primary position-relative">
+                    <i class="bi bi-chat-dots-fill"></i> Messages
+                    {% if total_unread > 0 %}
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">{{ total_unread }}</span>
+                    {% endif %}
+                </a>
+                <a href="{% url 'logout' %}" class="btn btn-sm btn-outline-danger"><i class="bi bi-box-arrow-right"></i></a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="page-header">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                <div>
+                    <h2><i class="bi bi-chat-dots" style="color:#4ECDC4;"></i> Messages</h2>
+                    <p class="text-muted mb-0">Chat with your tutors and learners</p>
+                </div>
+                {% if admin_user and admin_user != request.user %}
+                <a href="{% url 'contact_admin' %}" class="btn" style="background:linear-gradient(135deg,#4ECDC4,#3BABA3);color:#fff;border:none;border-radius:10px;font-weight:600;padding:8px 18px;">
+                    <i class="bi bi-headset"></i> Contact Support
+                </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Conversations List -->
+            <div class="col-lg-7">
+                {% if conversations %}
+                    {% for item in conversations %}
+                    <a href="{% url 'chat' item.other_user.pk %}" class="conversation-card {% if item.unread > 0 %}has-unread{% endif %}">
+                        <img src="{{ item.other_user.profile.avatar_url }}" alt="{{ item.other_user.get_full_name }}" class="conv-avatar">
+                        <div class="conv-info">
+                            <div class="conv-name">{{ item.other_user.get_full_name }}</div>
+                            <div class="conv-last-msg {% if item.unread > 0 %}unread-text{% endif %}">
+                                {% if item.last_message %}
+                                    {% if item.last_message.sender == request.user %}You: {% endif %}{{ item.last_message.content|truncatewords:12 }}
+                                {% else %}
+                                    No messages yet — say hi!
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="conv-meta">
+                            {% if item.last_message %}
+                            <div class="conv-time">{{ item.last_message.created_at|timesince }} ago</div>
+                            {% endif %}
+                            {% if item.unread > 0 %}
+                            <div class="unread-badge">{{ item.unread }}</div>
+                            {% endif %}
+                        </div>
+                    </a>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">
+                        <i class="bi bi-chat-square-text"></i>
+                        <h5 class="mt-3">No conversations yet</h5>
+                        <p class="text-muted">Start a chat from the contacts on the right, or book a session first.</p>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- New Chat / Contacts -->
+            <div class="col-lg-5">
+                <div class="new-chat-card">
+                    <h6 class="fw-bold mb-3"><i class="bi bi-person-plus" style="color:#667eea;"></i> Start a Conversation</h6>
+                    {% if contactable_users %}
+                        <p class="text-muted small mb-3">
+                            {% if profile.role == 'learner' %}Tutors you've booked sessions with:{% else %}Learners who booked your sessions:{% endif %}
+                        </p>
+                        {% for user in contactable_users %}
+                        <a href="{% url 'chat' user.pk %}" class="contact-item">
+                            <img src="{{ user.profile.avatar_url }}" alt="{{ user.get_full_name }}" class="contact-avatar">
+                            <div>
+                                <strong>{{ user.get_full_name }}</strong>
+                                <small class="d-block text-muted">{{ user.profile.expertise|default:user.profile.get_role_display }}</small>
+                            </div>
+                            <i class="bi bi-chat-fill ms-auto" style="color:#667eea;"></i>
+                        </a>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted small">
+                            {% if profile.role == 'learner' %}
+                                Book a session first to be able to message tutors.
+                            {% else %}
+                                Once learners book your sessions, you can chat with them here.
+                            {% endif %}
+                        </p>
+                        <a href="{% url 'browse_skills' %}" class="btn btn-primary btn-sm"><i class="bi bi-search"></i> Browse Sessions</a>
+                    {% endif %}
+                </div>
+
+                <!-- Help / Contact Admin Card -->
+                {% if admin_user and admin_user != request.user %}
+                <div style="margin-top:16px;background:linear-gradient(135deg,rgba(78,205,196,0.08),rgba(59,171,163,0.12));border:2px solid rgba(78,205,196,0.25);border-radius:14px;padding:20px;">
+                    <div class="d-flex align-items-center gap-3 mb-2">
+                        <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#4ECDC4,#3BABA3);display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.2rem;flex-shrink:0;">
+                            <i class="bi bi-headset"></i>
+                        </div>
+                        <div>
+                            <strong style="font-size:0.95rem;">Need Help?</strong>
+                            <small class="d-block" style="color:#718096;">Chat directly with Skillify support</small>
+                        </div>
+                    </div>
+                    <p style="font-size:0.8rem;color:#718096;margin-bottom:12px;">
+                        Having issues with sessions, payments, or your account? Our admin team is here to help.
+                    </p>
+                    <a href="{% url 'contact_admin' %}" class="btn btn-sm w-100" style="background:linear-gradient(135deg,#4ECDC4,#3BABA3);color:#fff;border:none;border-radius:8px;font-weight:600;">
+                        <i class="bi bi-chat-dots"></i> Message Support
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    {% include "core/chatbot_widget.html" %}
+    <script src="{% static 'js/dark-mode.js' %}"></script>
+</body>
+</html>

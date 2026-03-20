@@ -1,0 +1,17 @@
+{% extends "emails/base_email.html" %}
+{% block content %}
+<h2 style="margin:0 0 16px;color:#333;font-size:20px;">🔐 Your Verification Code</h2>
+<p style="color:#555;font-size:15px;line-height:1.6;margin:0 0 24px;">
+    Hi! Use the code below to {{ purpose }}. It expires in <strong>5 minutes</strong>.
+</p>
+
+<div style="text-align:center;margin:24px 0;">
+    <div style="display:inline-block;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;font-size:32px;font-weight:800;letter-spacing:12px;padding:20px 40px;border-radius:14px;box-shadow:0 4px 20px rgba(102,126,234,0.3);">
+        {{ otp_code }}
+    </div>
+</div>
+
+<p style="color:#888;font-size:13px;text-align:center;margin:20px 0 0;">
+    If you didn't request this code, please ignore this email.
+</p>
+{% endblock %}

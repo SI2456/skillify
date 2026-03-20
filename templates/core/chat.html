@@ -1,0 +1,382 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat with {{ other_user.get_full_name }} - Skillify</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #f0f2f5; height: 100vh; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
+
+        /* Chat Header */
+        .chat-header {
+            background: #fff; padding: 12px 20px; display: flex; align-items: center; gap: 14px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08); z-index: 10; flex-shrink: 0;
+        }
+        .chat-header .back-btn { color: #667eea; font-size: 1.3rem; text-decoration: none; }
+        .chat-avatar { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 2px solid #667eea; }
+        .chat-user-info { flex: 1; }
+        .chat-user-name { font-weight: 700; font-size: 1rem; }
+        .chat-user-role { font-size: 0.75rem; color: #6c757d; }
+        .online-dot { width: 10px; height: 10px; background: #28a745; border-radius: 50%; display: inline-block; margin-left: 6px; }
+
+        /* Messages Area */
+        .chat-messages {
+            flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 8px;
+        }
+        .chat-messages::-webkit-scrollbar { width: 6px; }
+        .chat-messages::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+
+        .message-row { display: flex; gap: 8px; max-width: 75%; animation: fadeIn 0.3s ease; }
+        .message-row.mine { margin-left: auto; flex-direction: row-reverse; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .msg-avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; flex-shrink: 0; margin-top: 4px; }
+        .message-bubble {
+            padding: 10px 16px; border-radius: 18px; font-size: 0.9rem;
+            line-height: 1.5; word-wrap: break-word; position: relative;
+        }
+        .message-row:not(.mine) .message-bubble {
+            background: #fff; color: #333; border-bottom-left-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+        .message-row.mine .message-bubble {
+            background: linear-gradient(135deg, #667eea, #764ba2); color: #fff;
+            border-bottom-right-radius: 4px;
+        }
+        .msg-time { font-size: 0.65rem; color: #999; margin-top: 3px; padding: 0 4px; }
+        .message-row.mine .msg-time { text-align: right; }
+
+        .date-divider {
+            text-align: center; padding: 10px 0; font-size: 0.75rem; color: #999;
+        }
+        .date-divider span {
+            background: #e9ecef; padding: 4px 14px; border-radius: 12px;
+        }
+
+        /* Typing area */
+        .chat-input-area {
+            background: #fff; padding: 14px 20px; display: flex; gap: 10px; align-items: flex-end;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.06); flex-shrink: 0;
+        }
+        .chat-input-area textarea {
+            width: 100%; border: 2px solid #e9ecef; border-radius: 24px; padding: 10px 18px;
+            font-size: 0.9rem; resize: none; max-height: 120px; outline: none;
+            font-family: 'Inter', sans-serif; transition: border-color 0.3s; box-sizing: border-box;
+        }
+        .chat-input-area textarea:focus { border-color: #4ECDC4; }
+        .attach-btn {
+            width: 42px; height: 42px; border-radius: 50%; border: 2px solid #e2e8f0;
+            background: #fff; color: #718096; font-size: 1.1rem; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+            transition: all 0.2s;
+        }
+        .attach-btn:hover { border-color: #4ECDC4; color: #4ECDC4; }
+        .send-btn {
+            width: 46px; height: 46px; border-radius: 50%; border: none;
+            background: linear-gradient(135deg, #667eea, #764ba2); color: #fff;
+            font-size: 1.2rem; cursor: pointer; display: flex; align-items: center;
+            justify-content: center; transition: transform 0.2s, opacity 0.2s;
+            flex-shrink: 0;
+        }
+        .send-btn:hover { transform: scale(1.05); }
+        .send-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+        .char-count { font-size: 0.7rem; color: #999; position: absolute; right: 80px; bottom: 18px; }
+
+        /* Empty state */
+        .chat-empty { text-align: center; margin: auto; color: #aaa; }
+        .chat-empty i { font-size: 4rem; }
+
+        @media (max-width: 768px) {
+            .message-row { max-width: 88%; }
+            .msg-avatar { width: 28px; height: 28px; }
+        }
+    </style>
+    <link rel="icon" type="image/svg+xml" href="{% static 'favicon.svg' %}">
+    <link rel="stylesheet" href="{% static 'css/dark-mode.css' %}
+    <link rel="stylesheet" href="{% static 'css/mobile.css' %}">">
+</head>
+<body>
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme" style="position:fixed;top:12px;left:12px;bottom:auto;right:auto;width:36px;height:36px;font-size:0.9rem;z-index:999;"><i class="bi bi-moon-stars-fill"></i></button>
+
+    <!-- Header -->
+    <div class="chat-header">
+        <a href="{% url 'inbox' %}" class="back-btn"><i class="bi bi-arrow-left"></i></a>
+        <img src="{{ other_user.profile.avatar_url }}" alt="{{ other_user.get_full_name }}" class="chat-avatar">
+        <div class="chat-user-info">
+            <div class="chat-user-name">
+                {{ other_user.get_full_name }}
+                <span class="online-dot" title="Online"></span>
+            </div>
+            <div class="chat-user-role">{{ other_user.profile.expertise|default:other_user.profile.get_role_display }}</div>
+        </div>
+        <a href="{% url 'tutor_profile' other_user.pk %}" class="btn btn-sm btn-outline-primary">
+            <i class="bi bi-person"></i> Profile
+        </a>
+    </div>
+
+    <!-- Messages -->
+    <div class="chat-messages" id="chatMessages">
+        {% if chat_messages %}
+            {% for msg in chat_messages %}
+            <div class="message-row {% if msg.sender == request.user %}mine{% endif %}" data-id="{{ msg.pk }}">
+                <img src="{{ msg.sender.profile.avatar_url }}" alt="" class="msg-avatar">
+                <div>
+                    <div class="message-bubble">
+                        {% if msg.content %}{{ msg.content }}{% endif %}
+                        {% if msg.attachment %}
+                            {% if msg.is_image %}
+                            <div style="margin-top:6px;">
+                                <img src="{{ msg.attachment.url }}" style="max-width:220px;border-radius:10px;cursor:pointer;" onclick="window.open('{{ msg.attachment.url }}')" alt="{{ msg.attachment_filename }}">
+                            </div>
+                            {% else %}
+                            <div style="margin-top:6px;padding:8px 12px;background:rgba(78,205,196,0.1);border-radius:8px;display:inline-flex;align-items:center;gap:6px;">
+                                <i class="bi bi-file-earmark" style="color:#4ECDC4;"></i>
+                                <a href="{{ msg.attachment.url }}" target="_blank" style="color:#4ECDC4;font-size:0.8rem;font-weight:600;text-decoration:none;">{{ msg.attachment_filename }}</a>
+                            </div>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                    <div class="msg-time">{{ msg.created_at|time:"h:i A" }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="chat-empty" id="emptyState">
+                <i class="bi bi-chat-heart"></i>
+                <h5 class="mt-3">Start the conversation!</h5>
+                <p>Say hello to {{ other_user.first_name }}</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Input Area -->
+    <div class="chat-input-area">
+        <input type="file" id="fileInput" accept="image/*,.pdf,.doc,.docx,.txt,.zip" style="display:none;" onchange="previewFile(this)">
+        <button class="attach-btn" onclick="document.getElementById('fileInput').click();" title="Attach file">
+            <i class="bi bi-paperclip"></i>
+        </button>
+        <div style="flex:1;min-width:0;">
+            <div id="filePreview" style="display:none;padding:6px 10px;background:#f0f4f8;border-radius:8px;margin-bottom:6px;font-size:0.8rem;align-items:center;gap:6px;">
+                <i class="bi bi-file-earmark" style="color:#4ECDC4;"></i>
+                <span id="fileName"></span>
+                <button onclick="clearFile()" style="background:none;border:none;color:#dc3545;cursor:pointer;font-size:0.9rem;margin-left:auto;"><i class="bi bi-x"></i></button>
+            </div>
+            <textarea id="messageInput" placeholder="Type a message..." rows="1" maxlength="2000" style="width:100%;"></textarea>
+        </div>
+        <button class="send-btn" id="sendBtn" disabled title="Send">
+            <i class="bi bi-send-fill"></i>
+        </button>
+    </div>
+
+    <script>
+    (function() {
+        const chatContainer = document.getElementById('chatMessages');
+        const input = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const emptyState = document.getElementById('emptyState');
+        const csrfToken = '{{ csrf_token }}';
+        const otherUserId = {{ other_user.pk }};
+        const myAvatar = '{{ request.user.profile.avatar_url }}';
+        const otherAvatar = '{{ other_user.profile.avatar_url }}';
+
+        let lastMessageId = 0;
+        let isSending = false;
+
+        // Get last message ID from DOM
+        const allMsgs = chatContainer.querySelectorAll('.message-row[data-id]');
+        if (allMsgs.length > 0) {
+            lastMessageId = parseInt(allMsgs[allMsgs.length - 1].getAttribute('data-id')) || 0;
+        }
+
+        // Scroll to bottom
+        function scrollToBottom() {
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+        scrollToBottom();
+
+        // Auto-resize textarea
+        input.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+            sendBtn.disabled = !this.value.trim() && !selectedFile;
+        });
+
+        // Enter to send (Shift+Enter for newline)
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                if (!sendBtn.disabled) sendMessage();
+            }
+        });
+
+        sendBtn.addEventListener('click', sendMessage);
+
+        // File attachment
+        let selectedFile = null;
+        window.previewFile = function(inp) {
+            if (inp.files && inp.files[0]) {
+                selectedFile = inp.files[0];
+                if (selectedFile.size > 10 * 1024 * 1024) {
+                    alert('File too large (max 10MB)');
+                    selectedFile = null; inp.value = ''; return;
+                }
+                document.getElementById('filePreview').style.display = 'flex';
+                document.getElementById('fileName').textContent = selectedFile.name;
+                sendBtn.disabled = false;
+            }
+        };
+        window.clearFile = function() {
+            selectedFile = null;
+            document.getElementById('fileInput').value = '';
+            document.getElementById('filePreview').style.display = 'none';
+            sendBtn.disabled = !input.value.trim();
+        };
+
+        function sendMessage() {
+            const content = input.value.trim();
+            if ((!content && !selectedFile) || isSending) return;
+
+            isSending = true;
+            sendBtn.disabled = true;
+
+            // Remove empty state
+            if (emptyState) emptyState.remove();
+
+            // Optimistic UI
+            const tempId = 'temp-' + Date.now();
+            appendMessage({
+                id: tempId,
+                content: content,
+                is_mine: true,
+                time: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true }),
+                sender_avatar: myAvatar,
+                attachment: selectedFile ? { filename: selectedFile.name, is_image: selectedFile.type.startsWith('image/'), url: '' } : null,
+            });
+
+            input.value = '';
+            input.style.height = 'auto';
+
+            // Send to server
+            const formData = new FormData();
+            formData.append('content', content);
+            formData.append('csrfmiddlewaretoken', csrfToken);
+            if (selectedFile) {
+                formData.append('attachment', selectedFile);
+            }
+
+            // Clear file after sending
+            clearFile();
+
+            fetch('/send-message/' + otherUserId + '/', {
+                method: 'POST',
+                body: formData,
+            })
+            .then(r => r.json())
+            .then(data => {
+                isSending = false;
+                if (data.success) {
+                    const tempEl = chatContainer.querySelector('[data-id="' + tempId + '"]');
+                    if (tempEl) {
+                        tempEl.setAttribute('data-id', data.message.id);
+                        // Update attachment URL if server returned it
+                        if (data.message.attachment && data.message.attachment.url) {
+                            const imgEl = tempEl.querySelector('.chat-attach-img');
+                            if (imgEl) imgEl.src = data.message.attachment.url;
+                            const linkEl = tempEl.querySelector('.chat-attach-link');
+                            if (linkEl) linkEl.href = data.message.attachment.url;
+                        }
+                    }
+                    lastMessageId = Math.max(lastMessageId, data.message.id);
+                } else {
+                    const tempEl = chatContainer.querySelector('[data-id="' + tempId + '"]');
+                    if (tempEl) {
+                        tempEl.querySelector('.message-bubble').style.opacity = '0.5';
+                        tempEl.querySelector('.msg-time').textContent = 'Failed: ' + (data.error || 'Error');
+                    }
+                }
+                sendBtn.disabled = false;
+            })
+            .catch(() => {
+                isSending = false;
+                sendBtn.disabled = false;
+            });
+        }
+
+        function appendMessage(msg) {
+            const row = document.createElement('div');
+            row.className = 'message-row ' + (msg.is_mine ? 'mine' : '');
+            row.setAttribute('data-id', msg.id);
+
+            const avatar = msg.is_mine ? myAvatar : (msg.sender_avatar || otherAvatar);
+
+            let contentHtml = '';
+            if (msg.content) contentHtml = escapeHtml(msg.content);
+
+            // Attachment
+            let attachHtml = '';
+            if (msg.attachment) {
+                if (msg.attachment.is_image) {
+                    attachHtml = `<div style="margin-top:6px;"><img src="${msg.attachment.url || '#'}" class="chat-attach-img" style="max-width:220px;border-radius:10px;cursor:pointer;" onclick="if(this.src!=='#')window.open(this.src)" alt="${msg.attachment.filename}"></div>`;
+                } else {
+                    attachHtml = `<div style="margin-top:6px;padding:8px 12px;background:rgba(78,205,196,0.1);border-radius:8px;display:inline-flex;align-items:center;gap:6px;">
+                        <i class="bi bi-file-earmark" style="color:#4ECDC4;"></i>
+                        <a href="${msg.attachment.url || '#'}" class="chat-attach-link" target="_blank" style="color:#4ECDC4;font-size:0.8rem;font-weight:600;text-decoration:none;">${msg.attachment.filename}</a>
+                    </div>`;
+                }
+            }
+
+            row.innerHTML = `
+                <img src="${avatar}" alt="" class="msg-avatar">
+                <div>
+                    <div class="message-bubble">${contentHtml}${attachHtml}</div>
+                    <div class="msg-time">${msg.time}</div>
+                </div>
+            `;
+            chatContainer.appendChild(row);
+            scrollToBottom();
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // ===== POLLING — Fetch new messages every 3 seconds =====
+        function pollMessages() {
+            fetch('/fetch-messages/' + otherUserId + '/?last_id=' + lastMessageId)
+            .then(r => r.json())
+            .then(data => {
+                if (data.messages && data.messages.length > 0) {
+                    // Remove empty state if present
+                    if (emptyState) emptyState.remove();
+
+                    data.messages.forEach(function(msg) {
+                        // Skip if already in DOM (sent by us optimistically)
+                        if (chatContainer.querySelector('[data-id="' + msg.id + '"]')) return;
+                        appendMessage(msg);
+                        lastMessageId = Math.max(lastMessageId, msg.id);
+                    });
+                }
+            })
+            .catch(() => {});
+        }
+
+        // Poll every 3 seconds
+        setInterval(pollMessages, 3000);
+
+        // Focus input on load
+        input.focus();
+
+    })();
+    </script>
+    {% comment %}Chatbot hidden on chat page to avoid overlapping send button{% endcomment %}
+    <style>#chatbotWidget { display: none !important; }</style>
+    <script src="{% static 'js/dark-mode.js' %}"></script>
+</body>
+</html>

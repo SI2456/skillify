@@ -1,0 +1,264 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Skillify</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+    <link rel="icon" type="image/svg+xml" href="{% static 'favicon.svg' %}">
+    <link rel="stylesheet" href="{% static 'css/dark-mode.css' %}
+    <link rel="stylesheet" href="{% static 'css/mobile.css' %}">">
+</head>
+<body>
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+        <i class="bi bi-moon-stars-fill"></i>
+    </button>
+
+    <nav class="navbar navbar-expand-lg navbar-light sticky-top">
+        <div class="container-fluid px-4">
+            <a class="navbar-brand" href="{% url 'index' %}">
+                <i class="bi bi-lightbulb-fill"></i><span>Skillify</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item"><a class="nav-link active" href="{% url 'dashboard' %}"><i class="bi bi-house-door"></i> Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'browse_skills' %}"><i class="bi bi-search"></i> Browse Skills</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'my_sessions' %}"><i class="bi bi-camera-video"></i> My Sessions</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'wallet' %}"><i class="bi bi-wallet2"></i> Wallet</a></li>
+                    <li class="nav-item">{% include "core/notification_widget.html" %}</li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <img src="{{ profile.avatar_url }}" class="user-avatar" alt="User" style="width:32px;height:32px;border-radius:50%;object-fit:cover;">
+                            <span class="role-indicator">{{ profile.get_role_display }}</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li class="dropdown-header">
+                                <div class="user-info">
+                                    <strong>{{ user.get_full_name }}</strong>
+                                    <small class="text-muted">{{ user.email }}</small>
+                                </div>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{% url 'switch_role' %}">
+                                <i class="bi bi-arrow-left-right"></i> Switch to {% if profile.role == 'learner' %}Tutor{% else %}Learner{% endif %}
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{% url 'edit_tutor_profile' %}"><i class="bi bi-person-gear"></i> Edit Profile</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="{% url 'logout' %}"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="dashboard-container">
+        <div class="container-fluid px-4 py-4">
+            <div class="welcome-header mb-4">
+                <div class="welcome-content">
+                    <h2 class="mb-2">
+                        Hello, <span class="user-name">{{ user.first_name }}!</span>
+                        <span class="wave-emoji">👋</span>
+                    </h2>
+                    <p class="text-muted mb-0">
+                        {% if profile.role == 'learner' %}Ready to learn something new today?{% else %}Ready to teach and inspire?{% endif %}
+                    </p>
+                </div>
+                <div class="quick-switch-widget">
+                    <div class="role-switch-card">
+                        <div class="current-role">
+                            <i class="bi bi-person-circle"></i>
+                            <div>
+                                <small>Current Mode</small>
+                                <strong>{{ profile.get_role_display }}</strong>
+                            </div>
+                        </div>
+                        <a href="{% url 'switch_role' %}" class="btn-switch-role" style="text-decoration:none;">
+                            <i class="bi bi-arrow-left-right"></i>
+                            Switch to {% if profile.role == 'learner' %}Tutor{% else %}Learner{% endif %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4">
+                <!-- Left Sidebar -->
+                <div class="col-lg-3">
+                    <div class="widget-card wallet-card mb-4">
+                        <div class="wallet-header">
+                            <h6 class="mb-0"><i class="bi bi-wallet2"></i> My Wallet</h6>
+                            <a href="{% url 'wallet' %}" class="view-all-link">View All</a>
+                        </div>
+                        <div class="wallet-balances">
+                            <div class="text-center py-3">
+                                <h2 class="text-primary mb-0">{{ wallet.balance }}</h2>
+                                <small class="text-muted">credits available</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if profile.role == 'tutor' %}
+                    <div class="widget-card trust-card mb-4">
+                        <h6 class="widget-title"><i class="bi bi-shield-check"></i> Trust Score</h6>
+                        <div class="text-center py-3">
+                            <h2 class="text-success">{{ profile.trust_score|floatformat:1 }}</h2>
+                            <small class="text-muted">/100</small>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="widget-card actions-card">
+                        <h6 class="widget-title"><i class="bi bi-lightning-charge"></i> Quick Actions</h6>
+                        <div class="action-buttons">
+                            {% if profile.role == 'learner' %}
+                            <a href="{% url 'browse_skills' %}" class="btn btn-outline-primary btn-sm w-100 mb-2">
+                                <i class="bi bi-search"></i> Find a Tutor
+                            </a>
+                            <a href="{% url 'learner_profile' %}" class="btn btn-outline-secondary btn-sm w-100 mb-2">
+                                <i class="bi bi-person-gear"></i> My Profile
+                            </a>
+                            {% else %}
+                            <a href="{% url 'create_session' %}" class="btn btn-outline-primary btn-sm w-100 mb-2">
+                                <i class="bi bi-plus-circle"></i> Create Session
+                            </a>
+                            <a href="{% url 'manage_availability' %}" class="btn btn-outline-primary btn-sm w-100 mb-2">
+                                <i class="bi bi-calendar-week"></i> Set Availability
+                            </a>
+                            <a href="{% url 'earnings_dashboard' %}" class="btn btn-outline-success btn-sm w-100 mb-2">
+                                <i class="bi bi-graph-up"></i> Earnings
+                            </a>
+                            <a href="{% url 'edit_tutor_profile' %}" class="btn btn-outline-secondary btn-sm w-100 mb-2">
+                                <i class="bi bi-pencil"></i> Edit Profile
+                            </a>
+                            {% endif %}
+                            <a href="{% url 'my_sessions' %}" class="btn btn-outline-secondary btn-sm w-100 mb-2">
+                                <i class="bi bi-camera-video"></i> My Sessions
+                            </a>
+                            <a href="{% url 'contact_admin' %}" class="btn btn-outline-info btn-sm w-100 mb-2">
+                                <i class="bi bi-headset"></i> Help & Support
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Content -->
+                <div class="col-lg-9">
+                    <!-- Stats -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-3">
+                            <div class="card text-center p-3">
+                                <h4 class="text-primary mb-1">{{ wallet.balance }}</h4>
+                                <small class="text-muted">Credits Balance</small>
+                            </div>
+                        </div>
+                        {% if profile.role == 'tutor' %}
+                        <div class="col-md-3">
+                            <div class="card text-center p-3">
+                                <h4 class="text-success mb-1">{{ tutor_stats.total_sessions }}</h4>
+                                <small class="text-muted">Total Sessions</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card text-center p-3">
+                                <h4 class="text-warning mb-1">{{ tutor_stats.avg_rating|floatformat:1 }}</h4>
+                                <small class="text-muted">Avg Rating</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card text-center p-3">
+                                <h4 class="text-info mb-1">{{ tutor_stats.total_students }}</h4>
+                                <small class="text-muted">Students</small>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Upcoming Sessions -->
+                    <div class="widget-card upcoming-sessions-widget mb-4">
+                        <div class="widget-header">
+                            <h5 class="mb-0"><i class="bi bi-calendar-check"></i> Upcoming Sessions</h5>
+                            <a href="{% url 'my_sessions' %}" class="view-all-link">View All</a>
+                        </div>
+                        <div class="sessions-timeline">
+                            {% if upcoming_bookings %}
+                                {% for booking in upcoming_bookings %}
+                                <div class="card mb-3 p-3">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-1">{{ booking.session.title }}</h6>
+                                            <small class="text-muted">
+                                                <i class="bi bi-calendar3"></i> {{ booking.session.date }}
+                                                <i class="bi bi-clock ms-2"></i> {{ booking.session.start_time|time:"H:i" }} - {{ booking.session.end_time|time:"H:i" }}
+                                            </small>
+                                            <br><small class="text-muted">
+                                                <i class="bi bi-person"></i> {{ booking.session.tutor.get_full_name }}
+                                                <i class="bi bi-lightbulb ms-2"></i> {{ booking.session.skill.name }}
+                                            </small>
+                                        </div>
+                                        <div class="text-end">
+                                            <span class="badge bg-primary mb-1">{{ booking.credits_paid }} credits</span>
+                                            {% if booking.session.zoom_join_url %}
+                                            <br><a href="{{ booking.session.zoom_join_url }}" target="_blank" class="btn btn-sm mt-1" style="background:#2D8CFF;color:#fff;font-size:0.75rem;">
+                                                <i class="bi bi-camera-video-fill"></i> Join Zoom
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="text-center py-4 text-muted">
+                                    <i class="bi bi-calendar-x" style="font-size:2rem;"></i>
+                                    <p class="mt-2">No upcoming sessions</p>
+                                    {% if profile.role == 'learner' %}
+                                    <a href="{% url 'browse_skills' %}" class="btn btn-primary btn-sm">Browse & Book</a>
+                                    {% else %}
+                                    <a href="{% url 'create_session' %}" class="btn btn-primary btn-sm">Create Session</a>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    {% if profile.role == 'tutor' and tutor_sessions %}
+                    <div class="widget-card mb-4">
+                        <h6 class="widget-title"><i class="bi bi-list-check"></i> Your Created Sessions</h6>
+                        {% for session in tutor_sessions %}
+                        <div class="card mb-2 p-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">{{ session.title }}</h6>
+                                    <small class="text-muted">{{ session.date }} | {{ session.skill.name }} | {{ session.credits_required }} credits</small>
+                                </div>
+                                <div>
+                                    <span class="badge bg-{% if session.status == 'upcoming' %}primary{% elif session.status == 'completed' %}success{% else %}secondary{% endif %}">
+                                        {{ session.get_status_display }}
+                                    </span>
+                                    {% if session.status == 'upcoming' %}
+                                    <a href="{% url 'tutor_complete_session' session.pk %}" class="btn btn-success btn-sm ms-2">Complete</a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{% static 'js/dashboard.js' %}"></script>
+    {% include "core/chatbot_widget.html" %}
+    <script src="{% static 'js/dark-mode.js' %}"></script>
+</body>
+</html>

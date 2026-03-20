@@ -1,0 +1,693 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Sessions - Skillify</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/my_session.css' %}">
+    <link rel="icon" type="image/svg+xml" href="{% static 'favicon.svg' %}">
+    <link rel="stylesheet" href="{% static 'css/dark-mode.css' %}
+    <link rel="stylesheet" href="{% static 'css/mobile.css' %}">">
+</head>
+<body>
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme"><i class="bi bi-moon-stars-fill"></i></button>
+
+    <nav class="navbar navbar-expand-lg navbar-light sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'index' %}"><i class="bi bi-lightbulb-fill"></i><span>Skillify</span></a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"><span class="navbar-toggler-icon"></span></button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item"><a class="nav-link" href="{% url 'dashboard' %}">Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'inbox' %}"><i class="bi bi-chat-dots"></i> Messages</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'browse_skills' %}">Browse Skills</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="{% url 'my_sessions' %}">My Sessions</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'wallet' %}"><i class="bi bi-wallet2"></i> {{ wallet.balance }} credits</a></li>
+                    <li class="nav-item">{% include "core/notification_widget.html" %}</li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <img src="{{ request.user.profile.avatar_url }}" class="user-avatar" alt="User" style="width:32px;height:32px;border-radius:50%;object-fit:cover;">
+                            <span class="role-indicator">{{ profile.get_role_display }}</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="{% url 'switch_role' %}"><i class="bi bi-arrow-left-right"></i> Switch Role</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{% url 'edit_tutor_profile' %}">Edit Profile</a></li>
+                            <li><a class="dropdown-item" href="{% url 'logout' %}">Logout</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="sessions-container">
+        <div class="container py-4">
+            <div class="page-header mb-4">
+                <div class="d-flex justify-content-between align-items-start flex-wrap">
+                    <div>
+                        <h2 class="fw-bold mb-2">
+                            <i class="bi bi-camera-video"></i>
+                            {% if profile.role == 'learner' %}My Learning Sessions{% else %}My Teaching Sessions{% endif %}
+                        </h2>
+                        <p class="text-muted mb-0">Manage your bookings and sessions</p>
+                    </div>
+                    <div class="header-actions">
+                        {% if profile.role == 'learner' %}
+                        <a href="{% url 'browse_skills' %}" class="btn btn-primary"><i class="bi bi-plus-circle"></i> Book New Session</a>
+                        {% else %}
+                        <a href="{% url 'create_session' %}" class="btn btn-primary"><i class="bi bi-plus-circle"></i> Create Session</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            {% if messages %}
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+
+            <!-- Tutor: Show created sessions -->
+            {% if profile.role == 'tutor' and sessions %}
+            <h5 class="mb-3"><i class="bi bi-list-check"></i> Your Sessions</h5>
+            <div class="sessions-grid">
+                {% for session in sessions %}
+                <div class="session-card session-upcoming">
+                    <div class="session-status-badge status-{% if session.status == 'upcoming' %}scheduled{% elif session.status == 'completed' %}completed{% else %}cancelled{% endif %}">
+                        <i class="bi bi-{% if session.status == 'upcoming' %}calendar-check{% elif session.status == 'completed' %}check-circle{% else %}x-circle{% endif %}"></i>
+                        {{ session.get_status_display }}
+                    </div>
+                    <div class="session-header">
+                        <div class="session-meta">
+                            <div class="session-skill">
+                                <div class="skill-details">
+                                    <h5 class="skill-name">{{ session.title }}</h5>
+                                    <span class="skill-category">{{ session.skill.name }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="session-body">
+                        <div class="session-info-grid">
+                            <div class="info-item"><i class="bi bi-calendar3"></i><div><small>Date</small><strong>{{ session.date }}</strong></div></div>
+                            <div class="info-item"><i class="bi bi-clock"></i><div><small>Time</small><strong>{{ session.start_time|time:"H:i" }} - {{ session.end_time|time:"H:i" }}</strong></div></div>
+                            <div class="info-item"><i class="bi bi-coin"></i><div><small>Credits</small><strong>{{ session.credits_required }}</strong></div></div>
+                            <div class="info-item"><i class="bi bi-people"></i><div><small>Bookings</small><strong>{{ session.bookings.count }}</strong></div></div>
+                        </div>
+                    </div>
+                    {% if session.status == 'upcoming' %}
+                    <div class="session-footer">
+                        <div class="session-actions d-flex gap-2 flex-wrap">
+                            {% if session.bookings.count > 0 %}
+                            <a href="{% url 'start_session' session.pk %}" class="btn btn-primary"
+                               onclick="return confirm('This will:\n1. Create a Zoom meeting\n2. Email the Zoom link to all {{ session.bookings.count }} learner(s)\n3. Open Zoom for you\n\nProceed?');">
+                                <i class="bi bi-camera-video-fill"></i> Start Session
+                                <span class="badge bg-light text-primary ms-1">{{ session.bookings.count }} learner{{ session.bookings.count|pluralize }}</span>
+                            </a>
+                            {% else %}
+                            <button class="btn btn-secondary" disabled>
+                                <i class="bi bi-camera-video"></i> No Learners Yet
+                            </button>
+                            {% endif %}
+                            {% if session.bookings.count > 0 %}
+                            <a href="{% url 'tutor_complete_session' session.pk %}" class="btn btn-success"
+                               onclick="return confirm('Mark session as complete?\n\nLearner(s) will be asked to confirm before credits are released.\nCredits auto-release in 30 min if no response.');">
+                                <i class="bi bi-check-circle"></i> Complete Session
+                            </a>
+                            <button class="btn btn-outline-warning" onclick="document.getElementById('rescheduleModal{{ session.pk }}').style.display='flex';">
+                                <i class="bi bi-calendar-event"></i> Reschedule
+                            </button>
+                            {% endif %}
+                        </div>
+
+                        <!-- Reschedule Modal -->
+                        <div id="rescheduleModal{{ session.pk }}" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:10000;align-items:center;justify-content:center;">
+                            <div style="background:#fff;border-radius:16px;padding:28px;max-width:420px;width:90%;box-shadow:0 10px 40px rgba(0,0,0,0.2);">
+                                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                                    <h5 style="margin:0;font-weight:700;"><i class="bi bi-calendar-event" style="color:#4ECDC4;"></i> Reschedule Session</h5>
+                                    <button onclick="document.getElementById('rescheduleModal{{ session.pk }}').style.display='none';" style="background:none;border:none;font-size:1.3rem;cursor:pointer;color:#999;">✕</button>
+                                </div>
+                                <p style="font-size:0.85rem;color:#718096;margin-bottom:16px;">
+                                    <strong>{{ session.title }}</strong><br>
+                                    Current: {{ session.date }} {{ session.start_time|time:"H:i" }}-{{ session.end_time|time:"H:i" }}<br>
+                                    <small style="color:#EF4444;">⚠️ Must reschedule 45+ min before session. Learners get 30 min to respond.</small>
+                                </p>
+                                <form method="POST" action="{% url 'tutor_reschedule' session.pk %}">
+                                    {% csrf_token %}
+                                    <div class="mb-3">
+                                        <label style="font-weight:600;font-size:0.85rem;">New Date</label>
+                                        <input type="date" name="new_date" class="form-control" required min="" id="reschedDate{{ session.pk }}">
+                                        <script>document.getElementById('reschedDate{{ session.pk }}').min=new Date().toISOString().split('T')[0];</script>
+                                    </div>
+                                    <div class="row g-2 mb-3">
+                                        <div class="col-6">
+                                            <label style="font-weight:600;font-size:0.85rem;">New Start</label>
+                                            <input type="time" name="new_start" class="form-control" required>
+                                        </div>
+                                        <div class="col-6">
+                                            <label style="font-weight:600;font-size:0.85rem;">New End</label>
+                                            <input type="time" name="new_end" class="form-control" required>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label style="font-weight:600;font-size:0.85rem;">Reason (optional)</label>
+                                        <textarea name="reason" class="form-control" rows="2" placeholder="Why are you rescheduling?"></textarea>
+                                    </div>
+                                    <button type="submit" class="btn w-100" style="background:linear-gradient(135deg,#4ECDC4,#3BABA3);color:#fff;border:none;border-radius:10px;padding:10px;font-weight:700;">
+                                        <i class="bi bi-send"></i> Send Reschedule Request
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+
+                        {% if session.zoom_meeting_id %}
+                        <div class="mt-2">
+                            <small class="text-muted">
+                                <i class="bi bi-camera-video text-primary"></i> Zoom Ready — Meeting ID: {{ session.zoom_meeting_id }}
+                                {% if session.zoom_password %} | Pass: {{ session.zoom_password }}{% endif %}
+                            </small>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Session Materials (Tutor can upload) -->
+                    <div class="mt-2 p-3" style="background:#f8f9fa;border-radius:10px;">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <small class="fw-bold"><i class="bi bi-file-earmark-pdf" style="color:#667eea;"></i> Materials</small>
+                            <button class="btn btn-sm btn-outline-primary" style="font-size:0.7rem;padding:2px 8px;" onclick="document.getElementById('matFile{{ session.pk }}').click();">
+                                <i class="bi bi-upload"></i> Upload
+                            </button>
+                        </div>
+                        <form method="POST" action="{% url 'upload_material' session.pk %}" enctype="multipart/form-data" style="display:none;" id="matForm{{ session.pk }}">
+                            {% csrf_token %}
+                            <input type="hidden" name="title" value="Session Material">
+                            <input type="file" name="file" id="matFile{{ session.pk }}" accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,.zip,.jpg,.png" onchange="this.form.querySelector('[name=title]').value=this.files[0].name;this.form.submit();">
+                        </form>
+                        {% for mat in session.materials.all %}
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            <i class="bi bi-file-earmark" style="color:#667eea;"></i>
+                            <a href="{{ mat.file.url }}" target="_blank" class="small text-decoration-none" style="color:#333;">{{ mat.filename }}</a>
+                            <button class="btn btn-sm p-0" style="font-size:0.7rem;color:#dc3545;" onclick="if(confirm('Delete this file?'))fetch('/delete-material/{{ mat.pk }}/',{method:'POST',headers:{'X-CSRFToken':'{{ csrf_token }}'}}).then(()=>location.reload());">
+                                <i class="bi bi-x"></i>
+                            </button>
+                        </div>
+                        {% empty %}
+                        <small class="text-muted">No materials uploaded yet</small>
+                        {% endfor %}
+                    </div>
+
+                    {% elif session.status == 'tutor_completed' %}
+                    <div class="session-footer">
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <span class="badge bg-warning text-dark p-2" style="font-size:0.85rem;">
+                                <i class="bi bi-hourglass-split"></i> Waiting for learner confirmation...
+                            </span>
+                        </div>
+                        <small class="text-muted d-block mt-1">
+                            <i class="bi bi-clock"></i> Credits auto-release in 30 min if learner doesn't respond
+                        </small>
+                    </div>
+                    {% elif session.status == 'completed' %}
+                    <div class="session-footer">
+                        <span class="badge bg-success p-2" style="font-size:0.85rem;">
+                            <i class="bi bi-check-circle-fill"></i> Completed — Credits Released
+                        </span>
+                    </div>
+                    {% endif %}
+
+                    <!-- Report Response Needed (Tutor) -->
+                    {% for bk in session.bookings.all %}
+                        {% if bk.report and bk.report.verdict == 'tutor_response_pending' %}
+                        <div class="mt-2 p-3" style="background:#FDE8E8;border:2px solid rgba(239,68,68,0.25);border-radius:12px;">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <i class="bi bi-shield-exclamation" style="color:#EF4444;font-size:1.2rem;"></i>
+                                <strong style="color:#DC2626;font-size:0.9rem;">Report: {{ bk.report.get_report_type_display }}</strong>
+                            </div>
+                            <p style="font-size:0.82rem;color:#718096;margin-bottom:8px;">
+                                Admin requests your response. Please explain your side and provide evidence.
+                            </p>
+                            <a href="{% url 'tutor_respond_report' bk.report.pk %}" class="btn btn-sm" style="background:#F59E0B;color:#fff;border:none;border-radius:8px;font-weight:600;">
+                                <i class="bi bi-reply"></i> Respond to Report
+                            </a>
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Learner: Show bookings -->
+            {% if profile.role == 'learner' %}
+            <ul class="nav nav-tabs session-tabs mb-4">
+                <li class="nav-item">
+                    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#upcoming">
+                        <i class="bi bi-calendar-check"></i> Upcoming
+                        <span class="badge bg-primary ms-2">{% if upcoming_bookings %}{{ upcoming_bookings.count }}{% else %}0{% endif %}</span>
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#completed">
+                        <i class="bi bi-check-circle"></i> Completed
+                        <span class="badge bg-success ms-2">{% if completed_bookings %}{{ completed_bookings.count }}{% else %}0{% endif %}</span>
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content">
+                <div class="tab-pane fade show active" id="upcoming">
+                    <div class="sessions-grid">
+                        {% if upcoming_bookings %}
+                        {% for booking in upcoming_bookings %}
+                        <div class="session-card session-upcoming">
+                            <div class="session-status-badge status-scheduled">
+                                <i class="bi bi-calendar-check"></i> {{ booking.session.date }}
+                            </div>
+                            <div class="session-header">
+                                <div class="session-participants">
+                                    <div class="participant">
+                                        <img src="{{ booking.session.tutor.profile.avatar_url }}" alt="{{ booking.session.tutor.get_full_name }}" class="participant-avatar" style="width:50px;height:50px;border-radius:50%;object-fit:cover;">
+                                        <div class="participant-info">
+                                            <h6 class="participant-name">{{ booking.session.tutor.get_full_name }}</h6>
+                                            <p class="participant-role">Tutor</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="session-meta">
+                                    <div class="session-skill">
+                                        <div class="skill-details">
+                                            <h5 class="skill-name">{{ booking.session.title }}</h5>
+                                            <span class="skill-category">{{ booking.session.skill.name }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="session-body">
+                                <div class="session-info-grid">
+                                    <div class="info-item"><i class="bi bi-calendar3"></i><div><small>Date</small><strong>{{ booking.session.date }}</strong></div></div>
+                                    <div class="info-item"><i class="bi bi-clock"></i><div><small>Time</small><strong>{{ booking.session.start_time|time:"H:i" }} - {{ booking.session.end_time|time:"H:i" }}</strong></div></div>
+                                    <div class="info-item"><i class="bi bi-coin"></i><div><small>Cost</small><strong>{{ booking.credits_paid }} credits</strong></div></div>
+                                </div>
+                            </div>
+                            {% if booking.session.zoom_join_url %}
+                            <div class="session-footer">
+                                <a href="{{ booking.session.zoom_join_url }}" target="_blank" class="btn btn-primary w-100" style="background:linear-gradient(135deg,#2D8CFF,#0B5CFF);border:none;">
+                                    <i class="bi bi-camera-video-fill"></i> Join Zoom Meeting
+                                </a>
+                                {% if booking.session.zoom_meeting_id %}
+                                <div class="mt-2 text-center">
+                                    <small class="text-muted">
+                                        <i class="bi bi-info-circle"></i> Meeting ID: {{ booking.session.zoom_meeting_id }}
+                                        {% if booking.session.zoom_password %} | Password: {{ booking.session.zoom_password }}{% endif %}
+                                    </small>
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+
+                            <!-- Session Materials (Learner can download) -->
+                            {% if booking.session.materials.count > 0 %}
+                            <div class="mt-2 p-3" style="background:#f0f0ff;border-radius:10px;">
+                                <small class="fw-bold d-block mb-2"><i class="bi bi-file-earmark-pdf" style="color:#667eea;"></i> Session Materials</small>
+                                {% for mat in booking.session.materials.all %}
+                                <div class="d-flex align-items-center gap-2 mb-1">
+                                    <i class="bi bi-download" style="color:#667eea;"></i>
+                                    <a href="{{ mat.file.url }}" target="_blank" class="small" style="color:#667eea;">{{ mat.filename }}</a>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+
+                            <!-- Reschedule Response (Learner) -->
+                            {% if booking.reschedule_status == 'pending' %}
+                            <div class="session-footer mt-2" style="background:linear-gradient(135deg,rgba(78,205,196,0.08),rgba(59,171,163,0.08));border:2px solid rgba(78,205,196,0.3);border-radius:12px;padding:16px;">
+                                <div class="d-flex align-items-start gap-2 mb-2">
+                                    <i class="bi bi-calendar-event-fill" style="color:#4ECDC4;font-size:1.3rem;margin-top:2px;"></i>
+                                    <div>
+                                        <p class="mb-1 fw-bold" style="color:#2D3748;font-size:0.9rem;">
+                                            Reschedule Request from {{ booking.session.tutor.get_full_name }}
+                                        </p>
+                                        <p style="font-size:0.82rem;color:#718096;margin-bottom:8px;">
+                                            <strong>New Time:</strong> {{ booking.reschedule_new_date }} at {{ booking.reschedule_new_start|time:"H:i" }} - {{ booking.reschedule_new_end|time:"H:i" }}
+                                        </p>
+                                        {% if booking.reschedule_reason %}
+                                        <p style="font-size:0.8rem;color:#718096;margin-bottom:8px;background:#fff;padding:8px 12px;border-radius:8px;border-left:3px solid #4ECDC4;">
+                                            <strong>Reason:</strong> {{ booking.reschedule_reason }}
+                                        </p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <form method="POST" action="{% url 'respond_reschedule' booking.pk %}" style="display:inline;">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="accept">
+                                        <button type="submit" class="btn btn-sm" style="background:linear-gradient(135deg,#4ECDC4,#3BABA3);color:#fff;border:none;border-radius:8px;font-weight:600;padding:6px 16px;">
+                                            <i class="bi bi-check-circle"></i> Accept New Time
+                                        </button>
+                                    </form>
+                                    <form method="POST" action="{% url 'respond_reschedule' booking.pk %}" style="display:inline;"
+                                          onsubmit="return confirm('Reject reschedule? Your {{ booking.credits_paid }} credits will be refunded and booking cancelled.');">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="reject">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" style="border-radius:8px;font-weight:600;padding:6px 16px;">
+                                            <i class="bi bi-x-circle"></i> Reject & Get Refund
+                                        </button>
+                                    </form>
+                                </div>
+                                <small style="color:#A0AEC0;display:block;margin-top:8px;">
+                                    <i class="bi bi-clock"></i> Auto-rejects in 30 min if no response. Credits will be refunded.
+                                </small>
+                            </div>
+                            {% elif booking.reschedule_status == 'accepted' %}
+                            <div class="session-footer mt-2" style="background:rgba(16,185,129,0.08);border-radius:10px;padding:10px 14px;">
+                                <span style="color:#10B981;font-weight:600;font-size:0.85rem;">
+                                    <i class="bi bi-check-circle-fill"></i> Reschedule accepted — Session moved to {{ booking.reschedule_new_date }} at {{ booking.reschedule_new_start|time:"H:i" }}
+                                </span>
+                            </div>
+                            {% elif booking.reschedule_status == 'rejected' or booking.reschedule_status == 'auto_rejected' %}
+                            <div class="session-footer mt-2" style="background:rgba(239,68,68,0.08);border-radius:10px;padding:10px 14px;">
+                                <span style="color:#EF4444;font-weight:600;font-size:0.85rem;">
+                                    <i class="bi bi-x-circle-fill"></i> Reschedule {{ booking.get_reschedule_status_display|lower }} — Credits refunded
+                                </span>
+                            </div>
+                            {% endif %}
+
+                            <!-- Dual Confirmation: Learner actions -->
+                            {% if booking.status == 'tutor_completed' %}
+                            <div class="session-footer mt-2" style="background:#fff8e1;border-radius:10px;padding:14px;">
+                                <p class="mb-2 fw-bold" style="color:#e65100;font-size:0.9rem;">
+                                    <i class="bi bi-bell-fill"></i> Tutor marked this session as complete. Please confirm:
+                                </p>
+                                <div class="d-flex gap-2 flex-wrap">
+                                    <a href="{% url 'learner_complete_session' booking.pk %}" class="btn btn-success btn-sm"
+                                       onclick="return confirm('Confirm this session was completed successfully?\nCredits will be released to the tutor.');">
+                                        <i class="bi bi-check-circle-fill"></i> Confirm Complete
+                                    </a>
+                                    <a href="{% url 'file_report' booking.pk %}" class="btn btn-outline-danger btn-sm">
+                                        <i class="bi bi-flag-fill"></i> Report Issue
+                                    </a>
+                                </div>
+                                <small class="text-muted d-block mt-2">
+                                    <i class="bi bi-clock"></i> Auto-confirms in 30 min if no action taken
+                                </small>
+                            </div>
+
+                            {% elif booking.status == 'disputed' %}
+                            <div class="session-footer mt-2" style="background:#fde8e8;border-radius:10px;padding:14px;">
+                                <span class="badge bg-danger p-2" style="font-size:0.85rem;">
+                                    <i class="bi bi-flag-fill"></i> Dispute Under Review
+                                </span>
+                                <small class="text-muted d-block mt-1">
+                                    Credits are on hold. Admin will review and resolve.
+                                </small>
+                            </div>
+
+                            {% elif booking.status == 'learner_completed' %}
+                            <div class="session-footer mt-2">
+                                <span class="badge bg-info p-2" style="font-size:0.85rem;">
+                                    <i class="bi bi-check"></i> You confirmed — Waiting for tutor
+                                </span>
+                            </div>
+                            {% endif %}
+
+                        </div>
+                        {% endfor %}
+                        {% else %}
+                        <div class="text-center py-5 text-muted">
+                            <i class="bi bi-calendar-x" style="font-size:3rem;"></i>
+                            <h5 class="mt-3">No upcoming sessions</h5>
+                            <a href="{% url 'browse_skills' %}" class="btn btn-primary mt-2">Browse & Book</a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="completed">
+                    <div class="sessions-grid">
+                        {% if completed_bookings %}
+                        {% for booking in completed_bookings %}
+                        <div class="session-card session-completed">
+                            <div class="session-status-badge status-completed">
+                                <i class="bi bi-check-circle"></i> {{ booking.get_status_display }}
+                            </div>
+                            <div class="session-header">
+                                <div class="session-meta">
+                                    <div class="session-skill">
+                                        <div class="skill-details">
+                                            <h5 class="skill-name">{{ booking.session.title }}</h5>
+                                            <span class="skill-category">{{ booking.session.skill.name }} | {{ booking.session.tutor.get_full_name }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="session-body">
+                                <div class="session-info-grid">
+                                    <div class="info-item"><i class="bi bi-calendar3"></i><div><small>Date</small><strong>{{ booking.session.date }}</strong></div></div>
+                                    <div class="info-item"><i class="bi bi-coin"></i><div><small>Cost</small><strong>{{ booking.credits_paid }} credits</strong></div></div>
+                                </div>
+                            </div>
+
+                            {% if booking.status == 'pending_review' %}
+                            <div class="session-footer" style="background:#f8f9fa;border-radius:12px;padding:20px;">
+                                <h6 class="fw-bold mb-3" style="color:#333;">
+                                    <i class="bi bi-star-fill text-warning"></i> Rate your experience with {{ booking.session.tutor.first_name }}
+                                </h6>
+                                <form method="POST" action="{% url 'submit_review' booking.session.pk %}" id="reviewForm{{ booking.pk }}">
+                                    {% csrf_token %}
+                                    <!-- Interactive Star Rating -->
+                                    <div class="mb-3">
+                                        <div class="star-rating" data-form="reviewForm{{ booking.pk }}">
+                                            <input type="hidden" name="rating" id="ratingVal{{ booking.pk }}" value="0" required>
+                                            {% for i in "54321" %}
+                                            <span class="star" data-value="{{ i }}" data-target="ratingVal{{ booking.pk }}" style="font-size:2rem;cursor:pointer;color:#dee2e6;transition:all 0.2s;padding:0 3px;">
+                                                <i class="bi bi-star-fill"></i>
+                                            </span>
+                                            {% endfor %}
+                                        </div>
+                                        <div class="rating-text mt-1" id="ratingText{{ booking.pk }}" style="font-size:0.85rem;color:#6c757d;font-weight:600;"></div>
+                                    </div>
+
+                                    <!-- Review Comment -->
+                                    <div class="mb-3">
+                                        <label class="form-label" style="font-weight:600;font-size:0.9rem;">
+                                            <i class="bi bi-chat-left-text"></i> Share your experience (optional)
+                                        </label>
+                                        <textarea name="comment" class="form-control" rows="3" maxlength="500"
+                                            placeholder="What did you learn? Was the tutor helpful? Would you recommend them?"
+                                            style="border-radius:10px;resize:none;"></textarea>
+                                        <small class="form-text text-muted">Max 500 characters</small>
+                                    </div>
+
+                                    <!-- Submit -->
+                                    <button type="submit" class="btn btn-warning fw-bold" disabled id="submitReview{{ booking.pk }}">
+                                        <i class="bi bi-send-fill"></i> Submit Review
+                                    </button>
+                                </form>
+                            </div>
+
+                            {% elif booking.status == 'completed' %}
+                            <!-- Already reviewed - show the review -->
+                            {% for review in booking.session.reviews.all %}
+                                {% if review.reviewer == request.user %}
+                                <div class="session-footer" style="background:#f0faf0;border-radius:12px;padding:16px;">
+                                    <div class="d-flex align-items-center gap-2 mb-2">
+                                        <span style="color:#ffc107;font-size:1.1rem;">
+                                            {% for i in "12345" %}
+                                            <i class="bi bi-star{% if forloop.counter <= review.rating %}-fill{% endif %}"></i>
+                                            {% endfor %}
+                                        </span>
+                                        <span class="badge bg-success"><i class="bi bi-check"></i> Reviewed</span>
+                                    </div>
+                                    {% if review.comment %}
+                                    <p class="mb-0" style="font-size:0.9rem;color:#555;">{{ review.comment }}</p>
+                                    {% endif %}
+                                    <small class="text-muted">{{ review.created_at|timesince }} ago</small>
+                                </div>
+                                {% endif %}
+                            {% endfor %}
+                            {% endif %}
+
+                        </div>
+                        {% endfor %}
+                        {% else %}
+                        <div class="text-center py-5 text-muted">
+                            <i class="bi bi-check-circle" style="font-size:3rem;"></i>
+                            <h5 class="mt-3">No completed sessions yet</h5>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Single Reusable Dispute Modal (outside all cards to avoid z-index/lag) -->
+    <div class="modal fade" id="disputeModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header" style="background:linear-gradient(135deg,#dc3545,#c82333);color:#fff;">
+                    <h5 class="modal-title"><i class="bi bi-flag-fill"></i> Report an Issue</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="POST" id="disputeForm" action="">
+                    {% csrf_token %}
+                    <div class="modal-body">
+                        <p class="fw-bold mb-1" id="disputeSessionTitle"></p>
+                        <div class="alert alert-warning small mb-3">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            This will <strong>pause the credit transfer</strong> and alert an admin to review.
+                            Only report if something actually went wrong.
+                        </div>
+                        <label class="form-label fw-bold">What went wrong?</label>
+                        <textarea name="reason" class="form-control" rows="4" required
+                            placeholder="e.g. Tutor didn't show up, session was much shorter than scheduled, content didn't match description..."></textarea>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-flag-fill"></i> Submit Report
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{% static 'js/my_session.js' %}"></script>
+    <script>
+    function openDispute(bookingId, sessionTitle) {
+        document.getElementById('disputeForm').action = '/report-issue/' + bookingId + '/';
+        document.getElementById('disputeSessionTitle').textContent = 'Session: ' + sessionTitle;
+        document.querySelector('#disputeModal textarea').value = '';
+        var modal = new bootstrap.Modal(document.getElementById('disputeModal'));
+        modal.show();
+    }
+
+    // ===== Interactive Star Rating =====
+    (function() {
+        const ratingLabels = {1: 'Poor', 2: 'Below Average', 3: 'Average', 4: 'Good', 5: 'Excellent!'};
+        const ratingColors = {1: '#dc3545', 2: '#fd7e14', 3: '#ffc107', 4: '#20c997', 5: '#28a745'};
+
+        document.querySelectorAll('.star-rating').forEach(function(container) {
+            const stars = container.querySelectorAll('.star');
+
+            stars.forEach(function(star) {
+                star.addEventListener('mouseenter', function() {
+                    const val = parseInt(this.dataset.value);
+                    stars.forEach(function(s) {
+                        const sv = parseInt(s.dataset.value);
+                        s.style.color = sv <= val ? '#ffc107' : '#dee2e6';
+                        s.style.transform = sv <= val ? 'scale(1.15)' : 'scale(1)';
+                    });
+                });
+
+                star.addEventListener('click', function() {
+                    const val = parseInt(this.dataset.value);
+                    const targetId = this.dataset.target;
+                    const hiddenInput = document.getElementById(targetId);
+                    hiddenInput.value = val;
+
+                    stars.forEach(function(s) {
+                        const sv = parseInt(s.dataset.value);
+                        s.style.color = sv <= val ? '#ffc107' : '#dee2e6';
+                        s.dataset.selected = sv <= val ? '1' : '0';
+                    });
+
+                    const textId = targetId.replace('ratingVal', 'ratingText');
+                    const textEl = document.getElementById(textId);
+                    if (textEl) {
+                        textEl.textContent = val + '/5 — ' + (ratingLabels[val] || '');
+                        textEl.style.color = ratingColors[val] || '#6c757d';
+                    }
+
+                    const submitId = targetId.replace('ratingVal', 'submitReview');
+                    const submitBtn = document.getElementById(submitId);
+                    if (submitBtn) submitBtn.disabled = false;
+                });
+            });
+
+            container.addEventListener('mouseleave', function() {
+                stars.forEach(function(s) {
+                    s.style.color = s.dataset.selected === '1' ? '#ffc107' : '#dee2e6';
+                    s.style.transform = 'scale(1)';
+                });
+            });
+        });
+
+        // AJAX Review Submission
+        document.querySelectorAll('form[id^="reviewForm"]').forEach(function(form) {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                const ratingInput = form.querySelector('input[name="rating"]');
+                if (!ratingInput || parseInt(ratingInput.value) < 1) {
+                    alert('Please select a star rating before submitting.');
+                    return;
+                }
+
+                const submitBtn = form.querySelector('button[type="submit"]');
+                const originalText = submitBtn.innerHTML;
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Submitting...';
+
+                const formData = new FormData(form);
+
+                fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        // Replace form with thank-you animation
+                        const container = form.closest('.session-footer');
+                        const rating = data.review.rating;
+                        const stars = '★'.repeat(rating) + '☆'.repeat(5 - rating);
+
+                        container.innerHTML = `
+                            <div class="text-center" style="animation:fadeInUp 0.5s ease;">
+                                <div style="width:70px;height:70px;background:linear-gradient(135deg,#28a745,#20c997);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;animation:scaleIn 0.4s ease;">
+                                    <i class="bi bi-check-lg" style="font-size:2rem;color:#fff;"></i>
+                                </div>
+                                <h6 class="fw-bold mb-1" style="color:#28a745;">Thank You!</h6>
+                                <div style="font-size:1.5rem;color:#ffc107;letter-spacing:3px;">${stars}</div>
+                                <p class="text-muted small mb-1">${data.review.rating}/5 — Your review helps others choose great tutors</p>
+                                ${data.review.comment ? '<p class="fst-italic text-muted small">"' + data.review.comment.substring(0, 100) + '"</p>' : ''}
+                                <span class="badge bg-success"><i class="bi bi-check-circle"></i> Review Submitted</span>
+                            </div>
+                        `;
+                    } else {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = originalText;
+                        alert(data.error || 'Failed to submit review.');
+                    }
+                })
+                .catch(() => {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
+                    alert('Network error. Please try again.');
+                });
+            });
+        });
+    })();
+    </script>
+    <style>
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes scaleIn { from { transform: scale(0); } to { transform: scale(1); } }
+    </style>
+    {% include "core/chatbot_widget.html" %}
+    <script src="{% static 'js/dark-mode.js' %}"></script>
+</body>
+</html>

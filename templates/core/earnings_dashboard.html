@@ -1,0 +1,227 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Earnings Dashboard - Skillify</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/svg+xml" href="{% static 'favicon.svg' %}">
+    <link rel="stylesheet" href="{% static 'css/dark-mode.css' %}
+    <link rel="stylesheet" href="{% static 'css/mobile.css' %}">">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #f5f7fa; }
+        .stat-card { background: #fff; border-radius: 16px; padding: 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
+        .stat-card .stat-value { font-size: 2rem; font-weight: 800; }
+        .stat-card .stat-label { font-size: 0.8rem; color: #6c757d; text-transform: uppercase; letter-spacing: 1px; }
+        .stat-icon { width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; }
+        .chart-card { background: #fff; border-radius: 16px; padding: 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg sticky-top" style="background:#fff;box-shadow:0 2px 10px rgba(0,0,0,0.08);">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="{% url 'index' %}"><i class="bi bi-lightbulb-fill" style="color:#667eea;"></i> Skillify</a>
+            <div class="d-flex align-items-center gap-3">
+                <a href="{% url 'dashboard' %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-speedometer2"></i> Dashboard</a>
+                <a href="{% url 'my_sessions' %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-calendar3"></i> Sessions</a>
+                <a href="{% url 'earnings_dashboard' %}" class="btn btn-sm btn-primary"><i class="bi bi-graph-up"></i> Earnings</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container py-4">
+        <h2 class="fw-bold mb-1"><i class="bi bi-graph-up" style="color:#667eea;"></i> Earnings Dashboard</h2>
+        <p class="text-muted mb-4">Track your teaching performance and income</p>
+
+        <!-- Stats Row -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="stat-label">Total Earned</div>
+                            <div class="stat-value" style="color:#28a745;">{{ total_earned }}</div>
+                            <small class="text-muted">credits all time</small>
+                        </div>
+                        <div class="stat-icon" style="background:#e8f5e9;color:#28a745;"><i class="bi bi-coin"></i></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="stat-label">This Month</div>
+                            <div class="stat-value" style="color:#667eea;">{{ monthly_earned }}</div>
+                            <small class="text-muted">credits this month</small>
+                        </div>
+                        <div class="stat-icon" style="background:#e8eaf6;color:#667eea;"><i class="bi bi-calendar-month"></i></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="stat-label">Students Taught</div>
+                            <div class="stat-value" style="color:#ff9800;">{{ total_students }}</div>
+                            <small class="text-muted">unique learners</small>
+                        </div>
+                        <div class="stat-icon" style="background:#fff3e0;color:#ff9800;"><i class="bi bi-people"></i></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="stat-label">Avg Rating</div>
+                            <div class="stat-value" style="color:#ffc107;">{{ avg_rating }}<small style="font-size:0.8rem;">/5</small></div>
+                            <small class="text-muted">{{ total_reviews }} reviews</small>
+                        </div>
+                        <div class="stat-icon" style="background:#fff8e1;color:#ffc107;"><i class="bi bi-star-fill"></i></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="row g-4 mb-4">
+            <div class="col-lg-8">
+                <div class="chart-card">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bold mb-0">Weekly Earnings</h5>
+                        <span class="badge bg-success">{{ weekly_earned }} credits this week</span>
+                    </div>
+                    <canvas id="weeklyChart" height="260"></canvas>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="chart-card">
+                    <h5 class="fw-bold mb-3">Monthly Trend</h5>
+                    <canvas id="monthlyChart" height="260"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-6">
+                <div class="chart-card">
+                    <h5 class="fw-bold mb-3">Rating Trend Over Time</h5>
+                    {% if total_reviews > 0 %}
+                    <canvas id="ratingChart" height="220"></canvas>
+                    {% else %}
+                    <div class="text-center py-4 text-muted">
+                        <i class="bi bi-star" style="font-size:2rem;"></i>
+                        <p class="mt-2">No reviews yet. Complete sessions to see your rating trend!</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="chart-card">
+                    <h5 class="fw-bold mb-3">Quick Stats</h5>
+                    <div class="d-flex flex-column gap-3">
+                        <div class="d-flex justify-content-between align-items-center p-3" style="background:#f8f9fa;border-radius:10px;">
+                            <span><i class="bi bi-calendar-check text-success"></i> Sessions Completed</span>
+                            <strong style="font-size:1.2rem;">{{ total_sessions }}</strong>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center p-3" style="background:#f8f9fa;border-radius:10px;">
+                            <span><i class="bi bi-people text-primary"></i> Unique Students</span>
+                            <strong style="font-size:1.2rem;">{{ total_students }}</strong>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center p-3" style="background:#f8f9fa;border-radius:10px;">
+                            <span><i class="bi bi-star-fill text-warning"></i> Total Reviews</span>
+                            <strong style="font-size:1.2rem;">{{ total_reviews }}</strong>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center p-3" style="background:#f8f9fa;border-radius:10px;">
+                            <span><i class="bi bi-coin text-success"></i> Weekly Earnings</span>
+                            <strong style="font-size:1.2rem;">{{ weekly_earned }} credits</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    {% include "core/chatbot_widget.html" %}
+    <script src="{% static 'js/dark-mode.js' %}"></script>
+    <script>
+    const weeklyData = JSON.parse('{{ weekly_chart|escapejs }}');
+    const monthlyData = JSON.parse('{{ monthly_chart|escapejs }}');
+    const ratingData = JSON.parse('{{ rating_trend|escapejs }}');
+
+    // Weekly Earnings Bar Chart
+    new Chart(document.getElementById('weeklyChart'), {
+        type: 'bar',
+        data: {
+            labels: weeklyData.map(d => d.label),
+            datasets: [{
+                label: 'Credits Earned',
+                data: weeklyData.map(d => d.value),
+                backgroundColor: 'rgba(102, 126, 234, 0.7)',
+                borderColor: '#667eea',
+                borderWidth: 1,
+                borderRadius: 6,
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true, ticks: { stepSize: 50 } } },
+        }
+    });
+
+    // Monthly Trend Doughnut / Line
+    new Chart(document.getElementById('monthlyChart'), {
+        type: 'line',
+        data: {
+            labels: monthlyData.map(d => d.label),
+            datasets: [{
+                label: 'Monthly',
+                data: monthlyData.map(d => d.value),
+                borderColor: '#28a745',
+                backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                fill: true,
+                tension: 0.4,
+                pointRadius: 4,
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true } },
+        }
+    });
+
+    // Rating Trend
+    if (ratingData.length > 0 && document.getElementById('ratingChart')) {
+        new Chart(document.getElementById('ratingChart'), {
+            type: 'line',
+            data: {
+                labels: ratingData.map(d => d.label),
+                datasets: [{
+                    label: 'Avg Rating',
+                    data: ratingData.map(d => d.value),
+                    borderColor: '#ffc107',
+                    backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                    fill: true,
+                    tension: 0.3,
+                    pointRadius: 3,
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: { y: { min: 0, max: 5, ticks: { stepSize: 1 } } },
+            }
+        });
+    }
+    </script>
+</body>
+</html>

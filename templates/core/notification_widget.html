@@ -1,0 +1,169 @@
+<!-- Notification Bell — Navbar Item -->
+<div style="position:relative;display:inline-block;" id="notifDropdown">
+    <a href="#" class="nav-link px-2" onclick="event.preventDefault();toggleNotifs();" style="position:relative;font-size:1.2rem;">
+        <i class="bi bi-bell" id="bellIcon"></i>
+        <span id="notifBadge" class="notif-badge-count">0</span>
+    </a>
+
+    <div id="notifPanel" class="notif-panel">
+        <div class="notif-header">
+            <strong><i class="bi bi-bell-fill"></i> Notifications</strong>
+            <button onclick="markAllNotifRead()" class="notif-read-all">Read all</button>
+        </div>
+        <div id="notifList" class="notif-list">
+            <div class="text-center py-5" id="notifEmpty" style="color:#aaa;">
+                <i class="bi bi-bell-slash" style="font-size:2rem;color:#ddd;"></i>
+                <p class="small mt-2 mb-0">No notifications</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.notif-badge-count {
+    display: none; position: absolute; top: 2px; right: -4px;
+    background: #EF4444; color: #fff; font-size: 0.55rem;
+    min-width: 17px; height: 17px; border-radius: 50%;
+    font-weight: 700; line-height: 17px; text-align: center;
+}
+.notif-badge-count.show { display: block; }
+
+.notif-panel {
+    display: none; position: absolute; right: -50px; top: 42px; width: 360px;
+    max-height: 440px; background: #fff; border-radius: 16px;
+    box-shadow: 0 10px 45px rgba(0,0,0,0.18); z-index: 10000; overflow: hidden;
+}
+.notif-panel.open { display: block; }
+
+.notif-header {
+    padding: 14px 18px; display: flex; justify-content: space-between; align-items: center;
+    background: linear-gradient(135deg, #4ECDC4, #3BABA3); color: #fff; border-radius: 16px 16px 0 0;
+}
+.notif-read-all {
+    background: rgba(255,255,255,0.2); border: none; color: #fff;
+    font-size: 0.75rem; padding: 4px 10px; border-radius: 20px; cursor: pointer; font-weight: 600;
+}
+.notif-list { max-height: 350px; overflow-y: auto; }
+
+.nf-item { display:flex; gap:10px; padding:12px 16px; cursor:pointer; transition:background .15s; border-bottom:1px solid #f5f5f5; text-decoration:none; color:inherit; }
+.nf-item:hover { background:#f5f7ff; color:inherit; }
+.nf-item.nf-unread { background:#f0faf8; border-left:3px solid #4ECDC4; }
+.nf-ico { width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:1rem; }
+.nf-ico-booking { background:#e8f5e9; color:#10B981; }
+.nf-ico-review { background:#fff8e1; color:#F59E0B; }
+.nf-ico-message { background:#e3f2fd; color:#3B82F6; }
+.nf-ico-credits { background:#f3e5f5; color:#8B5CF6; }
+.nf-ico-dispute { background:#fde8e8; color:#EF4444; }
+.nf-ico-reminder { background:#e0f7fa; color:#4ECDC4; }
+.nf-ico-default { background:#f0f0f0; color:#4ECDC4; }
+.nf-body { flex:1; min-width:0; }
+.nf-title { font-weight:600; font-size:0.82rem; color:#333; margin-bottom:1px; }
+.nf-msg { font-size:0.75rem; color:#888; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.nf-time { font-size:0.65rem; color:#bbb; margin-top:2px; }
+
+body.dark-theme .notif-panel { background:#1e293b; }
+body.dark-theme .nf-item:hover { background:#2d3748; }
+body.dark-theme .nf-item.nf-unread { background:#1a2a2a; border-left-color:#4ECDC4; }
+body.dark-theme .nf-title { color:#e0e0e0; }
+body.dark-theme .nf-msg { color:#888; }
+body.dark-theme #notifEmpty { color:#555; }
+</style>
+
+<script>
+(function(){
+    var nOpen = false;
+    var ICON_MAP = {
+        booking_new:'calendar-plus', booking_confirmed:'calendar-check',
+        session_reminder:'alarm', session_started:'camera-video',
+        review_received:'star', credits_received:'coin', credits_refunded:'arrow-counterclockwise',
+        message_new:'chat-dots', dispute_opened:'flag', dispute_resolved:'shield-check'
+    };
+    var CLASS_MAP = {
+        booking_new:'booking', booking_confirmed:'booking',
+        session_reminder:'reminder', session_started:'reminder',
+        review_received:'review', credits_received:'credits', credits_refunded:'credits',
+        message_new:'message', dispute_opened:'dispute', dispute_resolved:'dispute'
+    };
+
+    window.toggleNotifs = function() {
+        var p = document.getElementById('notifPanel');
+        nOpen = !nOpen;
+        if (nOpen) { p.classList.add('open'); fetchNotifs(); }
+        else { p.classList.remove('open'); }
+    };
+
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('#notifDropdown') && nOpen) {
+            document.getElementById('notifPanel').classList.remove('open');
+            nOpen = false;
+        }
+    });
+
+    function fetchNotifs() {
+        fetch('/api/notifications/').then(function(r){ return r.json(); }).then(function(data) {
+            updateBadge(data.unread_count);
+            var list = document.getElementById('notifList');
+            var empty = document.getElementById('notifEmpty');
+
+            if (!data.notifications || data.notifications.length === 0) {
+                if (empty) empty.style.display = 'block';
+                return;
+            }
+            if (empty) empty.style.display = 'none';
+
+            list.innerHTML = '';
+            data.notifications.forEach(function(n) {
+                var icon = ICON_MAP[n.type] || 'bell';
+                var cls = CLASS_MAP[n.type] || 'default';
+                var a = document.createElement('a');
+                a.href = n.link || '#';
+                a.className = 'nf-item' + (n.is_read ? '' : ' nf-unread');
+                a.onclick = function() { markNotifRead(n.id); };
+                a.innerHTML = '<div class="nf-ico nf-ico-' + cls + '"><i class="bi bi-' + icon + '-fill"></i></div>'
+                    + '<div class="nf-body"><div class="nf-title">' + n.title + '</div>'
+                    + '<div class="nf-msg">' + n.message + '</div>'
+                    + '<div class="nf-time">' + n.time_ago + '</div></div>';
+                list.appendChild(a);
+            });
+        }).catch(function(err) { console.log('Notif fetch error:', err); });
+    }
+
+    function updateBadge(count) {
+        var b = document.getElementById('notifBadge');
+        var bell = document.getElementById('bellIcon');
+        if (count > 0) {
+            b.textContent = count > 9 ? '9+' : count;
+            b.classList.add('show');
+            bell.className = 'bi bi-bell-fill';
+        } else {
+            b.classList.remove('show');
+            bell.className = 'bi bi-bell';
+        }
+    }
+
+    window.markNotifRead = function(id) {
+        fetch('/api/notifications/read/' + id + '/', { method: 'POST', headers: {'X-CSRFToken': getC()} }).catch(function(){});
+    };
+
+    window.markAllNotifRead = function() {
+        fetch('/api/notifications/read-all/', { method: 'POST', headers: {'X-CSRFToken': getC()} }).then(function() {
+            document.querySelectorAll('.nf-unread').forEach(function(el) { el.classList.remove('nf-unread'); });
+            updateBadge(0);
+        }).catch(function(){});
+    };
+
+    function getC() {
+        var c = document.cookie.split(';').find(function(c) { return c.trim().startsWith('csrftoken='); });
+        return c ? c.split('=')[1] : '';
+    }
+
+    // Poll badge every 30 seconds
+    function pollBadge() {
+        fetch('/api/notifications/').then(function(r){ return r.json(); }).then(function(d) {
+            updateBadge(d.unread_count);
+        }).catch(function(){});
+    }
+    setInterval(pollBadge, 30000);
+    setTimeout(pollBadge, 1000);
+})();
+</script>

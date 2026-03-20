@@ -1,0 +1,585 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Profile - Skillify</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/edit_tutor_profile.css' %}">
+    <style>
+        .profile-pic-wrapper {
+            position: relative;
+            width: 150px;
+            height: 150px;
+            margin: 0 auto;
+        }
+        .profile-pic-wrapper img {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid #4ECDC4;
+            transition: all 0.3s;
+        }
+        .profile-pic-wrapper:hover img {
+            opacity: 0.7;
+        }
+        .profile-pic-overlay {
+            position: absolute;
+            top: 0; left: 0;
+            width: 150px; height: 150px;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s;
+            cursor: pointer;
+            color: #fff;
+        }
+        .profile-pic-wrapper:hover .profile-pic-overlay {
+            opacity: 1;
+        }
+        .profile-pic-overlay i {
+            font-size: 1.8rem;
+            margin-bottom: 4px;
+        }
+        .profile-pic-overlay span {
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .remove-pic-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: #dc3545;
+            color: #fff;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            cursor: pointer;
+            z-index: 2;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+        .demo-video-section {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            border: 2px dashed #dee2e6;
+        }
+        .demo-video-section.has-video {
+            border-color: #4ECDC4;
+            background: #f0faf9;
+        }
+        .video-preview {
+            border-radius: 8px;
+            overflow: hidden;
+            margin-top: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .video-preview iframe {
+            width: 100%;
+            height: 280px;
+            border: none;
+        }
+        .file-info {
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-top: 8px;
+        }
+        .file-info i {
+            color: #4ECDC4;
+        }
+    </style>
+    <link rel="icon" type="image/svg+xml" href="{% static 'favicon.svg' %}">
+    <link rel="stylesheet" href="{% static 'css/dark-mode.css' %}
+    <link rel="stylesheet" href="{% static 'css/mobile.css' %}">">
+</head>
+<body>
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme"><i class="bi bi-moon-stars-fill"></i></button>
+
+    <nav class="navbar navbar-expand-lg navbar-light sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'index' %}"><i class="bi bi-lightbulb-fill"></i><span>Skillify</span></a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"><span class="navbar-toggler-icon"></span></button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item"><a class="nav-link" href="{% url 'dashboard' %}">Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'tutor_profile' user.pk %}">View Public Profile</a></li>
+                    <li class="nav-item">
+                        <span class="current-role-badge"><i class="bi bi-person-video3"></i> {{ request.user.profile.get_role_display }} Mode</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container py-4">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h2 class="fw-bold mb-1"><i class="bi bi-pencil-square"></i> Edit Profile</h2>
+                <p class="text-muted mb-0">Update your profile picture, info, skills, and demo video</p>
+            </div>
+        </div>
+
+        {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        <form method="POST" action="{% url 'edit_tutor_profile' %}" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="hidden" name="remove_picture" id="removePictureFlag" value="0">
+
+            <div class="row">
+                <div class="col-lg-8">
+
+                    <!-- ===== PROFILE PICTURE SECTION ===== -->
+                    <div class="card mb-4">
+                        <div class="card-body p-4">
+                            <h5 class="section-title mb-4"><i class="bi bi-camera"></i> Profile Picture</h5>
+                            <div class="text-center">
+                                <div class="profile-pic-wrapper">
+                                    <img src="{{ profile.avatar_url }}" alt="Profile" id="profilePreview">
+                                    <label for="profilePictureInput" class="profile-pic-overlay">
+                                        <i class="bi bi-camera-fill"></i>
+                                        <span>Change Photo</span>
+                                    </label>
+                                    {% if profile.profile_picture %}
+                                    <button type="button" class="remove-pic-btn" id="removePicBtn" title="Remove photo">
+                                        <i class="bi bi-x-lg"></i>
+                                    </button>
+                                    {% endif %}
+                                </div>
+                                <input type="file" id="profilePictureInput" name="profile_picture" accept="image/jpeg,image/png,image/gif,image/webp" hidden>
+                                <div class="file-info mt-2">
+                                    <i class="bi bi-info-circle"></i> JPG, PNG, GIF or WebP. Max 5MB.
+                                </div>
+                                {% if profile.profile_picture %}
+                                <div class="mt-2">
+                                    <span class="badge bg-success"><i class="bi bi-check-circle"></i> Custom photo uploaded</span>
+                                </div>
+                                {% else %}
+                                <div class="mt-2">
+                                    <span class="badge bg-secondary"><i class="bi bi-person-circle"></i> Using auto-generated avatar</span>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ===== BASIC INFO SECTION ===== -->
+                    <div class="card mb-4">
+                        <div class="card-body p-4">
+                            <h5 class="section-title mb-4"><i class="bi bi-person-circle"></i> Basic Information</h5>
+
+                            <div class="mb-3">
+                                <label for="fullName" class="form-label">Full Name *</label>
+                                <input type="text" class="form-control" id="fullName" name="fullName" value="{{ user.get_full_name }}" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="headline" class="form-label">Professional Headline *</label>
+                                <input type="text" class="form-control" id="headline" name="headline" value="{{ profile.expertise }}" placeholder="e.g., React Developer | 5+ years experience">
+                                <small class="form-text">This appears below your name on your profile</small>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="bio" class="form-label">About Me *</label>
+                                <textarea class="form-control" id="bio" name="bio" rows="6" maxlength="1000">{{ profile.bio }}</textarea>
+                                <small class="form-text">Tell learners about your experience and teaching style</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ===== DEMO VIDEO SECTION ===== -->
+                    <div class="card mb-4">
+                        <div class="card-body p-4">
+                            <h5 class="section-title mb-4"><i class="bi bi-play-circle"></i> Demo Video</h5>
+                            <p class="text-muted small mb-3">Add a YouTube or Vimeo link to showcase your teaching style. This video will be visible on your public profile.</p>
+                            
+                            <div class="demo-video-section {% if profile.demo_video %}has-video{% endif %}">
+                                <div class="mb-3">
+                                    <label for="demo_video" class="form-label fw-bold">
+                                        <i class="bi bi-youtube text-danger"></i> Video URL
+                                    </label>
+                                    <input type="url" class="form-control" id="demo_video" name="demo_video" 
+                                           value="{{ profile.demo_video }}" 
+                                           placeholder="YouTube, Vimeo, or Google Drive link">
+                                    <div class="file-info">
+                                        <i class="bi bi-info-circle"></i> Supported: YouTube, Vimeo, and Google Drive links
+                                    </div>
+                                </div>
+
+                                <!-- Video Preview -->
+                                <div id="videoPreviewContainer" {% if not profile.get_embed_video_url %}style="display:none;"{% endif %}>
+                                    <label class="form-label fw-bold text-success"><i class="bi bi-eye"></i> Preview</label>
+                                    <div class="video-preview">
+                                        <iframe id="videoPreviewFrame" 
+                                                src="{{ profile.get_embed_video_url }}" 
+                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                                allowfullscreen></iframe>
+                                    </div>
+                                </div>
+
+                                {% if profile.demo_video %}
+                                <div class="mt-3">
+                                    <span class="badge bg-success"><i class="bi bi-check-circle"></i> Video linked</span>
+                                    <button type="button" class="btn btn-outline-danger btn-sm ms-2" id="clearVideoBtn">
+                                        <i class="bi bi-trash"></i> Remove Video
+                                    </button>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ===== EXPERIENCE & EDUCATION ===== -->
+                    <div class="card mb-4">
+                        <div class="card-body p-4">
+                            <h5 class="section-title mb-4"><i class="bi bi-mortarboard"></i> Experience & Education</h5>
+
+                            <!-- Experience Years -->
+                            <div class="mb-3">
+                                <label for="experience_years" class="form-label fw-bold">
+                                    <i class="bi bi-briefcase"></i> Years of Experience
+                                </label>
+                                <div class="d-flex align-items-center gap-3">
+                                    <input type="number" class="form-control" id="experience_years" name="experience_years"
+                                           value="{{ profile.experience_years }}" min="0" max="50" style="max-width:120px;">
+                                    <span class="text-muted">years</span>
+                                    <div class="form-check form-switch ms-auto">
+                                        <input class="form-check-input" type="checkbox" id="show_experience" name="show_experience"
+                                               {% if profile.show_experience %}checked{% endif %}>
+                                        <label class="form-check-label small" for="show_experience">
+                                            <i class="bi bi-eye{% if not profile.show_experience %}-slash{% endif %}"></i>
+                                            Show publicly
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Education -->
+                            <div class="mb-3">
+                                <label for="education" class="form-label fw-bold">
+                                    <i class="bi bi-book"></i> Education
+                                </label>
+                                <textarea class="form-control" id="education" name="education" rows="3"
+                                    placeholder="e.g. B.Tech in Computer Science, IIT Delhi (2020)&#10;M.Sc. Data Science, Stanford University (2022)">{{ profile.education }}</textarea>
+                                <small class="form-text text-muted">Add each degree on a new line</small>
+                                <div class="form-check form-switch mt-2">
+                                    <input class="form-check-input" type="checkbox" id="show_education" name="show_education"
+                                           {% if profile.show_education %}checked{% endif %}>
+                                    <label class="form-check-label small" for="show_education">
+                                        <i class="bi bi-eye{% if not profile.show_education %}-slash{% endif %}"></i>
+                                        Show publicly
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="alert alert-info small mb-0">
+                                <i class="bi bi-info-circle"></i>
+                                Toggle the switches to control what's visible on your public profile.
+                                Disabled fields won't be shown to learners.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ===== CERTIFICATE SECTION ===== -->
+                    <div class="card mb-4">
+                        <div class="card-body p-4">
+                            <h5 class="section-title mb-4"><i class="bi bi-award"></i> Teaching Certificate</h5>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">
+                                    <i class="bi bi-patch-check text-success"></i> Certificate Title
+                                </label>
+                                <input type="text" class="form-control" name="certificate_title"
+                                       value="{{ profile.certificate_title }}"
+                                       placeholder="e.g. B.Ed, TESOL, AWS Certified, Google Educator">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">
+                                    <i class="bi bi-file-earmark-pdf text-danger"></i> Upload Certificate
+                                </label>
+                                <input type="file" class="form-control" name="certificate" accept=".pdf,.jpg,.jpeg,.png">
+                                <small class="form-text text-muted">PDF or image (max 10MB)</small>
+                            </div>
+
+                            {% if profile.certificate %}
+                            <div class="d-flex align-items-center gap-2 p-2" style="background:rgba(16,185,129,0.08);border-radius:10px;">
+                                <i class="bi bi-patch-check-fill" style="color:#10B981;font-size:1.2rem;"></i>
+                                <div style="flex:1;">
+                                    <strong style="font-size:0.85rem;">{{ profile.certificate_title|default:"Certificate" }}</strong>
+                                    <a href="{{ profile.certificate.url }}" target="_blank" style="display:block;font-size:0.75rem;color:#4ECDC4;">View certificate</a>
+                                </div>
+                                <label style="font-size:0.75rem;color:#EF4444;cursor:pointer;">
+                                    <input type="checkbox" name="remove_certificate" value="1" style="margin-right:2px;"> Remove
+                                </label>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- ===== LINKS SECTION ===== -->
+                    <div class="card mb-4">
+                        <div class="card-body p-4">
+                            <h5 class="section-title mb-4"><i class="bi bi-link-45deg"></i> Portfolio Links</h5>
+
+                            <div class="mb-3">
+                                <label for="linkedin" class="form-label">
+                                    <i class="bi bi-linkedin text-primary"></i> LinkedIn URL
+                                </label>
+                                <input type="url" class="form-control" id="linkedin" name="linkedin" value="{{ profile.linkedin }}" placeholder="https://linkedin.com/in/yourname">
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="github" class="form-label">
+                                    <i class="bi bi-github"></i> GitHub URL
+                                </label>
+                                <input type="url" class="form-control" id="github" name="github" value="{{ profile.github }}" placeholder="https://github.com/yourname">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ===== SKILLS SECTION ===== -->
+                    <div class="card mb-4">
+                        <div class="card-body p-4">
+                            <h5 class="section-title mb-4"><i class="bi bi-lightbulb"></i> Skills I Teach</h5>
+                            <div class="row">
+                                {% for skill in skills %}
+                                <div class="col-md-4 mb-2">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="skills" value="{{ skill.pk }}" id="skill_{{ skill.pk }}"
+                                               {% if skill in profile.skills.all %}checked{% endif %}>
+                                        <label class="form-check-label" for="skill_{{ skill.pk }}">{{ skill.name }}</label>
+                                    </div>
+                                </div>
+                                {% empty %}
+                                <div class="col-12">
+                                    <div class="alert alert-warning mb-0">
+                                        <i class="bi bi-exclamation-triangle"></i>
+                                        <strong>No skills available yet.</strong> Ask admin to run:
+                                        <code>python manage.py create_skills</code> or <code>python manage.py seed_data</code>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ===== SAVE BUTTON ===== -->
+                    <div class="d-flex gap-2 mb-4">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-check-circle"></i> Save All Changes
+                        </button>
+                        <a href="{% url 'tutor_profile' user.pk %}" class="btn btn-outline-secondary btn-lg">
+                            <i class="bi bi-eye"></i> View Public Profile
+                        </a>
+                    </div>
+                </div>
+
+                <!-- ===== RIGHT SIDEBAR ===== -->
+                <div class="col-lg-4">
+                    <!-- Current Profile Card -->
+                    <div class="card mb-4">
+                        <div class="card-body p-4 text-center">
+                            <img src="{{ profile.avatar_url }}" alt="Profile" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid #4ECDC4;" class="mb-3">
+                            <h6 class="fw-bold">{{ user.get_full_name }}</h6>
+                            <p class="text-muted small mb-2">{{ profile.expertise|default:"No headline set" }}</p>
+                            <span class="badge bg-primary">{{ profile.get_role_display }}</span>
+                            {% if profile.trust_score %}
+                            <span class="badge bg-success ms-1"><i class="bi bi-shield-check"></i> {{ profile.trust_score|floatformat:0 }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Tips -->
+                    <div class="card tips-card">
+                        <div class="card-body p-4">
+                            <h6 class="fw-bold mb-3"><i class="bi bi-lightbulb-fill text-warning"></i> Profile Tips</h6>
+                            <ul class="tips-list list-unstyled">
+                                <li class="mb-2"><i class="bi bi-check-circle text-success"></i> Upload a clear, professional photo</li>
+                                <li class="mb-2"><i class="bi bi-check-circle text-success"></i> Record a short demo video</li>
+                                <li class="mb-2"><i class="bi bi-check-circle text-success"></i> Write a compelling headline</li>
+                                <li class="mb-2"><i class="bi bi-check-circle text-success"></i> Share your teaching experience</li>
+                                <li class="mb-2"><i class="bi bi-check-circle text-success"></i> Link your GitHub/LinkedIn</li>
+                                <li class="mb-2"><i class="bi bi-check-circle text-success"></i> Select relevant skills</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // ===== PROFILE PICTURE PREVIEW =====
+        const fileInput = document.getElementById('profilePictureInput');
+        const preview = document.getElementById('profilePreview');
+        const removeFlag = document.getElementById('removePictureFlag');
+
+        if (fileInput) {
+            fileInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    // Validate size (5MB max)
+                    if (file.size > 5 * 1024 * 1024) {
+                        alert('File too large! Maximum size is 5MB.');
+                        this.value = '';
+                        return;
+                    }
+                    // Validate type
+                    if (!file.type.match(/^image\/(jpeg|png|gif|webp)$/)) {
+                        alert('Invalid file type. Please upload JPG, PNG, GIF, or WebP.');
+                        this.value = '';
+                        return;
+                    }
+                    // Show preview
+                    const reader = new FileReader();
+                    reader.onload = function(ev) {
+                        preview.src = ev.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                    removeFlag.value = '0';
+
+                    // Show remove button if not already there
+                    let removeBtn = document.getElementById('removePicBtn');
+                    if (!removeBtn) {
+                        removeBtn = document.createElement('button');
+                        removeBtn.type = 'button';
+                        removeBtn.className = 'remove-pic-btn';
+                        removeBtn.id = 'removePicBtn';
+                        removeBtn.title = 'Remove photo';
+                        removeBtn.innerHTML = '<i class="bi bi-x-lg"></i>';
+                        preview.parentElement.appendChild(removeBtn);
+                        attachRemoveHandler(removeBtn);
+                    }
+                }
+            });
+        }
+
+        // ===== REMOVE PROFILE PICTURE =====
+        function attachRemoveHandler(btn) {
+            btn.addEventListener('click', function() {
+                removeFlag.value = '1';
+                fileInput.value = '';
+                // Reset to generated avatar
+                const fallback = "https://ui-avatars.com/api/?name={{ user.get_full_name|urlencode }}&background=4ECDC4&color=fff&size=150";
+                preview.src = fallback;
+                this.remove();
+            });
+        }
+
+        const removePicBtn = document.getElementById('removePicBtn');
+        if (removePicBtn) {
+            attachRemoveHandler(removePicBtn);
+        }
+
+        // ===== DEMO VIDEO PREVIEW =====
+        const videoInput = document.getElementById('demo_video');
+        const previewContainer = document.getElementById('videoPreviewContainer');
+        const previewFrame = document.getElementById('videoPreviewFrame');
+        const clearVideoBtn = document.getElementById('clearVideoBtn');
+
+        function getEmbedUrl(url) {
+            if (!url) return '';
+            // YouTube watch
+            let match = url.match(/youtube\.com\/watch\?v=([a-zA-Z0-9_-]+)/);
+            if (match) return 'https://www.youtube.com/embed/' + match[1];
+            // YouTube short
+            match = url.match(/youtu\.be\/([a-zA-Z0-9_-]+)/);
+            if (match) return 'https://www.youtube.com/embed/' + match[1];
+            // YouTube embed already
+            if (url.includes('youtube.com/embed/')) return url;
+            // Vimeo
+            match = url.match(/vimeo\.com\/(\d+)/);
+            if (match) return 'https://player.vimeo.com/video/' + match[1];
+            return '';
+        }
+
+        if (videoInput) {
+            let debounceTimer;
+            videoInput.addEventListener('input', function() {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(function() {
+                    const embedUrl = getEmbedUrl(videoInput.value.trim());
+                    if (embedUrl) {
+                        previewFrame.src = embedUrl;
+                        previewContainer.style.display = 'block';
+                    } else {
+                        previewFrame.src = '';
+                        previewContainer.style.display = 'none';
+                    }
+                }, 600);
+            });
+        }
+
+        if (clearVideoBtn) {
+            clearVideoBtn.addEventListener('click', function() {
+                videoInput.value = '';
+                previewFrame.src = '';
+                previewContainer.style.display = 'none';
+                this.parentElement.style.display = 'none';
+            });
+        }
+
+        // ===== THEME TOGGLE =====
+        const themeToggle = document.getElementById('themeToggle');
+        if (themeToggle) {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark-theme');
+                themeToggle.innerHTML = '<i class="bi bi-sun-fill"></i>';
+            }
+            themeToggle.addEventListener('click', function() {
+                document.body.classList.toggle('dark-theme');
+                const isDark = document.body.classList.contains('dark-theme');
+                localStorage.setItem('theme', isDark ? 'dark' : 'light');
+                this.innerHTML = isDark ? '<i class="bi bi-sun-fill"></i>' : '<i class="bi bi-moon-stars-fill"></i>';
+            });
+        }
+
+        // Auto-dismiss alerts
+        document.querySelectorAll('.alert-dismissible').forEach(function(alert) {
+            setTimeout(function() {
+                var bsAlert = bootstrap.Alert.getOrCreateInstance(alert);
+                if (bsAlert) bsAlert.close();
+            }, 5000);
+        });
+    });
+
+    // Toggle eye icon when visibility switches change
+    document.querySelectorAll('.form-check-input[id^="show_"]').forEach(function(toggle) {
+        toggle.addEventListener('change', function() {
+            const label = this.nextElementSibling;
+            const icon = label.querySelector('i');
+            if (this.checked) {
+                icon.className = 'bi bi-eye';
+            } else {
+                icon.className = 'bi bi-eye-slash';
+            }
+        });
+    });
+    </script>
+    {% include "core/chatbot_widget.html" %}
+    <script src="{% static 'js/dark-mode.js' %}"></script>
+</body>
+</html>

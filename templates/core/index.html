@@ -1,0 +1,329 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Skillify - Learn. Teach. Earn Credits.</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/home.css' %}">
+    <link rel="icon" type="image/svg+xml" href="{% static 'favicon.svg' %}">
+    <link rel="stylesheet" href="{% static 'css/dark-mode.css' %}
+    <link rel="stylesheet" href="{% static 'css/mobile.css' %}">">
+</head>
+<body>
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+        <i class="bi bi-moon-stars-fill"></i>
+    </button>
+
+    <nav class="navbar navbar-expand-lg navbar-light sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'index' %}">
+                <i class="bi bi-lightbulb-fill"></i>
+                <span>Skillify</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#home">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'browse_skills' %}">Browse Skills</a>
+                    </li>
+                    {% if user.is_authenticated %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'dashboard' %}">Dashboard</a>
+                    </li>
+                    <li class="nav-item ms-lg-3">
+                        <a class="btn btn-outline-primary" href="{% url 'logout' %}">Logout</a>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'login' %}">Login</a>
+                    </li>
+                    <li class="nav-item ms-lg-3">
+                        <a class="btn btn-primary" href="{% url 'register' %}">Get Started</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-section" id="home">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6 hero-content">
+                    <h1 class="hero-title">
+                        Learn. Teach.<br>
+                        Earn Credits.
+                    </h1>
+                    <p class="hero-subtitle">
+                        Exchange skills with peer-to-peer mentorship platform.<br>
+                        Use a credit-based economy to stay free, democratically, why rely only earn.<br>
+                        Learn from others while teaching what you know.
+                    </p>
+                    <div class="hero-buttons">
+                        <a href="{% url 'register' %}" class="btn btn-primary btn-lg">Get Started</a>
+                        <a href="{% url 'browse_skills' %}" class="btn btn-outline-primary btn-lg">Browse Skills</a>
+                    </div>
+                    <div class="trust-indicators">
+                        <div class="trust-item"><i class="bi bi-shield-check"></i><span>Verified Tutors</span></div>
+                        <div class="trust-item"><i class="bi bi-star-fill"></i><span>Trusted Reviews</span></div>
+                        <div class="trust-item"><i class="bi bi-shield-fill-check"></i><span>Secure Credit System</span></div>
+                    </div>
+                </div>
+                <div class="col-lg-6 hero-illustration">
+                    <div class="illustration-wrapper">
+                        <svg viewBox="0 0 500 400" class="hero-svg">
+                            <circle cx="100" cy="80" r="30" class="float-element" fill="#E8F5FF" opacity="0.6" />
+                            <rect x="380" y="280" width="60" height="60" rx="10" class="float-element" fill="#FFE8E8" opacity="0.6" />
+                            <circle cx="420" cy="100" r="25" class="float-element" fill="#FFF4E8" opacity="0.6" />
+                            <rect x="80" y="280" width="340" height="15" rx="7" fill="#8B9DC3" />
+                            <rect x="200" y="220" width="100" height="70" rx="5" fill="#3B4B6B" />
+                            <rect x="205" y="225" width="90" height="55" rx="3" fill="#4ECDC4" />
+                            <line x1="250" y1="290" x2="250" y2="280" stroke="#3B4B6B" stroke-width="3" />
+                            <rect x="235" y="290" width="30" height="5" rx="2" fill="#8B9DC3" />
+                            <ellipse cx="130" cy="190" rx="25" ry="30" fill="#FFB6B6" />
+                            <circle cx="130" cy="175" r="20" fill="#FFB6B6" />
+                            <rect x="105" y="195" width="50" height="60" rx="10" fill="#4ECDC4" />
+                            <rect x="100" y="210" width="20" height="50" rx="5" fill="#FFB6B6" />
+                            <rect x="140" y="210" width="20" height="50" rx="5" fill="#FFB6B6" />
+                            <ellipse cx="370" cy="190" rx="25" ry="30" fill="#FFB6B6" />
+                            <circle cx="370" cy="175" r="20" fill="#FFB6B6" />
+                            <rect x="345" y="195" width="50" height="60" rx="10" fill="#6C7A9B" />
+                            <rect x="340" y="210" width="20" height="50" rx="5" fill="#FFB6B6" />
+                            <rect x="380" y="210" width="20" height="50" rx="5" fill="#FFB6B6" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Feature Cards Section -->
+    <section class="features-cards">
+        <div class="container">
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon learn"><i class="bi bi-book"></i></div>
+                        <h3>Learn</h3>
+                        <p>Get access to skilled mentors,<br>tutors on a 1:1/sessions<br>basis anytime!</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon teach"><i class="bi bi-person-video3"></i></div>
+                        <h3>Teach</h3>
+                        <p>Start your online tutor career!<br>Teach skills, get rewarded!<br>Set your own time!</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon earn"><i class="bi bi-coin"></i></div>
+                        <h3>Earn Credits</h3>
+                        <p>Use our credit system, earn credits by teaching, spend credits on learning!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section class="how-it-works" id="how-it-works">
+        <div class="container">
+            <div class="section-header text-center">
+                <h2>How Skillify Works</h2>
+                <p>Start your learning journey in three simple steps</p>
+            </div>
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="step-card">
+                        <div class="step-number">1</div>
+                        <div class="step-icon"><i class="bi bi-person-plus-fill"></i></div>
+                        <h4>Create Your Account</h4>
+                        <p>Sign up with email. One account for both learning and teaching. Get 100 free starting credits!</p>
+                        <div class="step-badge">Dual-Role System</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="step-card">
+                        <div class="step-number">2</div>
+                        <div class="step-icon"><i class="bi bi-search"></i></div>
+                        <h4>Browse & Match</h4>
+                        <p>Browse tutors based on skills, ratings, and trust scores. Or create your tutor profile!</p>
+                        <div class="step-badge">Smart Matching</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="step-card">
+                        <div class="step-number">3</div>
+                        <div class="step-icon"><i class="bi bi-camera-video-fill"></i></div>
+                        <h4>Start Learning</h4>
+                        <p>Book one-to-one or group sessions. Rate, review, and earn badges!</p>
+                        <div class="step-badge">Live Sessions</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Key Features -->
+    <section class="key-features" id="features">
+        <div class="container">
+            <div class="section-header text-center">
+                <h2>Why Choose Skillify?</h2>
+                <p>The smartest way to exchange skills</p>
+            </div>
+            <div class="row g-4">
+                <div class="col-md-6 col-lg-4">
+                    <div class="feature-box">
+                        <div class="feature-box-icon"><i class="bi bi-arrow-left-right"></i></div>
+                        <h5>Dual-Role System</h5>
+                        <p>Switch between learner and tutor modes seamlessly. One account, unlimited possibilities.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4">
+                    <div class="feature-box">
+                        <div class="feature-box-icon"><i class="bi bi-wallet2"></i></div>
+                        <h5>Credit Economy</h5>
+                        <p>Earn credits by teaching, spend to learn. A fair and transparent system.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4">
+                    <div class="feature-box">
+                        <div class="feature-box-icon"><i class="bi bi-shield-check"></i></div>
+                        <h5>Trust & Verification</h5>
+                        <p>Evidence-based profiles with automated trust scores. Quality guaranteed.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4">
+                    <div class="feature-box">
+                        <div class="feature-box-icon"><i class="bi bi-people-fill"></i></div>
+                        <h5>Flexible Sessions</h5>
+                        <p>One-to-one for personalized learning. Group sessions for popular topics.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4">
+                    <div class="feature-box">
+                        <div class="feature-box-icon"><i class="bi bi-star-fill"></i></div>
+                        <h5>Reviews & Ratings</h5>
+                        <p>Real feedback from real learners. Make informed decisions.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4">
+                    <div class="feature-box">
+                        <div class="feature-box-icon"><i class="bi bi-map"></i></div>
+                        <h5>Skill Diversity</h5>
+                        <p>From coding to cooking, music to marketing. Learn anything you want.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats -->
+    <section class="stats-section">
+        <div class="container">
+            <div class="row text-center">
+                <div class="col-6 col-md-3">
+                    <div class="stat-item">
+                        <h3 class="stat-number" data-count="{{ tutor_count }}">0</h3>
+                        <p>Active Tutors</p>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="stat-item">
+                        <h3 class="stat-number" data-count="{{ session_count }}">0</h3>
+                        <p>Sessions Completed</p>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="stat-item">
+                        <h3 class="stat-number" data-count="{{ skill_count }}">0</h3>
+                        <p>Skill Categories</p>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="stat-item">
+                        <h3 class="stat-number">4.8/5</h3>
+                        <p>Average Rating</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta-section" id="get-started">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-8 text-center">
+                    <h2>Ready to Start Your Journey?</h2>
+                    <p>Join thousands of learners and tutors exchanging skills every day</p>
+                    <div class="cta-buttons">
+                        <a href="{% url 'register' %}" class="btn btn-light btn-lg">
+                            <i class="bi bi-rocket-takeoff-fill"></i> Get Started Free
+                        </a>
+                    </div>
+                    <p class="cta-note">
+                        <i class="bi bi-check-circle-fill"></i> No credit card required
+                        <i class="bi bi-check-circle-fill ms-3"></i> 100 free starting credits
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4 mb-4">
+                    <h5 class="footer-brand"><i class="bi bi-lightbulb-fill"></i> Skillify</h5>
+                    <p class="footer-description">Peer-to-peer skill exchange and learning platform.</p>
+                </div>
+                <div class="col-md-2 mb-4">
+                    <h6>Product</h6>
+                    <ul class="footer-links">
+                        <li><a href="#">Features</a></li>
+                        <li><a href="#">How it Works</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-2 mb-4">
+                    <h6>Support</h6>
+                    <ul class="footer-links">
+                        <li><a href="#">Help Center</a></li>
+                        <li><a href="#">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-2 mb-4">
+                    <h6>Legal</h6>
+                    <ul class="footer-links">
+                        <li><a href="#">Privacy</a></li>
+                        <li><a href="#">Terms</a></li>
+                    </ul>
+                </div>
+            </div>
+            <hr class="footer-divider">
+            <div class="row align-items-center">
+                <div class="col-md-6 text-center text-md-start">
+                    <p class="footer-copyright">&copy; 2026 Skillify - All rights reserved.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{% static 'js/home.js' %}"></script>
+    {% include "core/chatbot_widget.html" %}
+    <script src="{% static 'js/dark-mode.js' %}"></script>
+</body>
+</html>
