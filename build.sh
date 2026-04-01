@@ -29,6 +29,3 @@ site.name = 'Skillify'
 site.save()
 print(f'Site updated: {domain}')
 "
-
-# Load seed data
-python manage.py seed_data
