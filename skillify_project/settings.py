@@ -160,6 +160,9 @@ ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
 SOCIALACCOUNT_AUTO_SIGNUP = True
 SOCIALACCOUNT_LOGIN_ON_GET = True
 SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
+SOCIALACCOUNT_ADAPTER = 'core.adapters.SkillifyAdapter'
+ACCOUNT_ADAPTER = 'allauth.account.adapter.DefaultAccountAdapter'
+SOCIALACCOUNT_FORMS = {}
 SOCIALACCOUNT_PROVIDERS = {'google': {'SCOPE': ['profile', 'email'], 'AUTH_PARAMS': {'access_type': 'online'}}}
 
 if not DEBUG:
