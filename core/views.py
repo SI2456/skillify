@@ -125,13 +125,8 @@ def resend_otp_view(request):
         profile.otp_created_at = timezone.now()
         profile.save()
         try:
-            send_mail(
-                'Skillify - New OTP',
-                f'Your new OTP verification code is: {otp}\n\nThis code expires in 5 minutes.',
-                settings.DEFAULT_FROM_EMAIL,
-                [email],
-                fail_silently=False,
-            )
+            from .email_service import send_otp_email
+            send_otp_email(email, otp, 'verify your account')
         except Exception:
             pass
         messages.success(request, 'New OTP sent!')
