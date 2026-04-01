@@ -1,6 +1,9 @@
 import os
 from pathlib import Path
+from dotenv import load_dotenv
 import dj_database_url
+
+load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -102,8 +105,8 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'rajputsiddhraj6353@gmail.com')
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', 'eozd dajw dbcn xzuh')
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 # For development, use console email backend
@@ -116,14 +119,14 @@ LOGOUT_REDIRECT_URL = '/'
 
 # Zoom API (Server-to-Server OAuth)
 # Get credentials from: https://marketplace.zoom.us/ → Create Server-to-Server OAuth App
-ZOOM_ACCOUNT_ID = os.environ.get('ZOOM_ACCOUNT_ID', 'j1yQ_ei6TUe_e5YdnYK32w')
-ZOOM_CLIENT_ID = os.environ.get('ZOOM_CLIENT_ID', 'ls5pR8W0QchG7K13_pCJQ')
-ZOOM_CLIENT_SECRET = os.environ.get('ZOOM_CLIENT_SECRET', 'x7FUxdM1veMp4sTVerSwyFcF584d5Bxg')
+ZOOM_ACCOUNT_ID = os.environ.get('ZOOM_ACCOUNT_ID')
+ZOOM_CLIENT_ID = os.environ.get('ZOOM_CLIENT_ID')
+ZOOM_CLIENT_SECRET = os.environ.get('ZOOM_CLIENT_SECRET')
 
 # Razorpay Payment Gateway
 # Get credentials from: https://dashboard.razorpay.com/ → Settings → API Keys
-RAZORPAY_KEY_ID = os.environ.get('RAZORPAY_KEY_ID', 'rzp_test_SSCM5YjTTzuNJn')
-RAZORPAY_KEY_SECRET = os.environ.get('RAZORPAY_KEY_SECRET', 'jaJZGJvYSIq8Kaw5npVk0rKc')
+RAZORPAY_KEY_ID = os.environ.get('RAZORPAY_KEY_ID')
+RAZORPAY_KEY_SECRET = os.environ.get('RAZORPAY_KEY_SECRET')
 
 CREDIT_PACKAGES = [
     {'id': 'pkg_10', 'inr': 100, 'credits': 10, 'label': '10 Credits', 'popular': False},
