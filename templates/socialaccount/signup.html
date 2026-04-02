@@ -1,0 +1,14 @@
+{% load socialaccount %}
+<html>
+<body>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    document.querySelector('form').submit();
+  });
+</script>
+<form method="POST" action="{% url 'socialaccount_signup' %}">
+  {% csrf_token %}
+  {{ form.as_p }}
+</form>
+</body>
+</html>
