@@ -3,6 +3,8 @@ Email Notification Service for Skillify.
 Uses HTML templates with branding for all emails.
 """
 
+import os
+import threading
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.conf import settings
@@ -10,19 +12,12 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-SITE_URL = 'http://127.0.0.1:8000'
+SITE_URL = os.environ.get('SITE_URL', 'http://127.0.0.1:8000')
 
 
-def _send_html_email(subject, template, context, to_email):
-    """Send an HTML email using a template. Falls back to plain text."""
-    context['site_url'] = SITE_URL
+def _send_email_sync(subject, html_content, plain_text, to_email):
+    """Actual SMTP send — runs in a background thread."""
     try:
-        html_content = render_to_string(template, context)
-        # Strip HTML for plain text fallback
-        import re
-        plain_text = re.sub(r'<[^>]+>', '', html_content)
-        plain_text = re.sub(r'\s+', ' ', plain_text).strip()
-
         msg = EmailMultiAlternatives(
             subject=subject,
             body=plain_text,
@@ -30,11 +25,31 @@ def _send_html_email(subject, template, context, to_email):
             to=[to_email],
         )
         msg.attach_alternative(html_content, 'text/html')
-        msg.send(fail_silently=False)
+        msg.send(fail_silently=True)
         logger.info(f'Email sent to {to_email}: {subject}')
-        return True
     except Exception as e:
         logger.error(f'Failed to send email to {to_email}: {e}')
+
+
+def _send_html_email(subject, template, context, to_email):
+    """Render template and dispatch email send to a background thread.
+    Returns immediately so the request is not blocked by SMTP latency."""
+    context['site_url'] = SITE_URL
+    try:
+        html_content = render_to_string(template, context)
+        import re
+        plain_text = re.sub(r'<[^>]+>', '', html_content)
+        plain_text = re.sub(r'\s+', ' ', plain_text).strip()
+
+        thread = threading.Thread(
+            target=_send_email_sync,
+            args=(subject, html_content, plain_text, to_email),
+            daemon=True,
+        )
+        thread.start()
+        return True
+    except Exception as e:
+        logger.error(f'Failed to render email template for {to_email}: {e}')
         return False
 
 

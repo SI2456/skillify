@@ -10,7 +10,7 @@ services:
     runtime: python
     plan: free
     buildCommand: ./build.sh
-    startCommand: gunicorn skillify_project.wsgi:application
+    startCommand: gunicorn skillify_project.wsgi:application --workers 1 --threads 4 --timeout 120 --max-requests 200 --max-requests-jitter 50
     envVars:
       - key: DATABASE_URL
         fromDatabase:
