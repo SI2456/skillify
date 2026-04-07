@@ -1,0 +1,196 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - Skillify</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/svg+xml" href="{% static 'favicon.svg' %}">
+    <style>
+        :root {
+            --primary: #4ECDC4;
+            --primary-dark: #3BABA3;
+            --gradient-teal: linear-gradient(135deg, #4ECDC4, #3BABA3);
+            --bg: #F0F4F8;
+            --card: #FFFFFF;
+            --text: #2D3748;
+            --text-sec: #718096;
+            --border: #E2E8F0;
+        }
+        * { font-family: 'Inter', sans-serif; }
+        body {
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #E8EFF7 0%, #F0F4F8 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .admin-card {
+            background: var(--card);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(78, 205, 196, 0.15);
+            max-width: 440px;
+            width: 100%;
+            overflow: hidden;
+            border: 2px solid var(--border);
+        }
+        .card-header {
+            background: var(--gradient-teal);
+            padding: 32px 28px 28px;
+            color: #fff;
+            text-align: center;
+            position: relative;
+        }
+        .card-header::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at top right, rgba(255,255,255,0.15), transparent 50%);
+        }
+        .lock-icon {
+            width: 64px; height: 64px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 14px;
+            font-size: 1.7rem;
+            backdrop-filter: blur(10px);
+            position: relative;
+        }
+        .card-header h2 {
+            font-weight: 800;
+            margin: 0;
+            font-size: 1.5rem;
+            position: relative;
+        }
+        .card-header p {
+            margin: 6px 0 0;
+            opacity: 0.9;
+            font-size: 0.85rem;
+            position: relative;
+        }
+        .card-body {
+            padding: 32px 28px;
+        }
+        .form-label {
+            font-weight: 600;
+            font-size: 0.82rem;
+            color: var(--text);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .form-control {
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-size: 0.92rem;
+            transition: all 0.2s;
+            background: #FAFBFC;
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(78, 205, 196, 0.12);
+            background: #fff;
+        }
+        .btn-admin {
+            background: var(--gradient-teal);
+            color: #fff;
+            border: none;
+            padding: 13px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            width: 100%;
+            transition: all 0.2s;
+            box-shadow: 0 4px 16px rgba(78, 205, 196, 0.3);
+        }
+        .btn-admin:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 22px rgba(78, 205, 196, 0.4);
+            color: #fff;
+        }
+        .alert {
+            border-radius: 12px;
+            font-size: 0.85rem;
+            padding: 10px 14px;
+            border: none;
+        }
+        .alert-danger { background: rgba(239, 68, 68, 0.1); color: #DC2626; }
+        .alert-success { background: rgba(16, 185, 129, 0.1); color: #10B981; }
+        .back-link {
+            text-align: center;
+            margin-top: 18px;
+            font-size: 0.82rem;
+        }
+        .back-link a {
+            color: var(--text-sec);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .back-link a:hover { color: var(--primary); }
+        .logo-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-weight: 800;
+            color: #fff;
+            font-size: 1rem;
+            margin-bottom: 14px;
+            position: relative;
+        }
+        .logo-row i { font-size: 1.3rem; }
+    </style>
+</head>
+<body>
+    <div class="admin-card">
+        <div class="card-header">
+            <div class="logo-row">
+                <i class="bi bi-lightbulb-fill"></i>
+                <span>Skillify</span>
+            </div>
+            <div class="lock-icon"><i class="bi bi-shield-lock-fill"></i></div>
+            <h2>Admin Access</h2>
+            <p>Sign in to manage the platform</p>
+        </div>
+        <div class="card-body">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags|default:'danger' }} mb-3">
+                        <i class="bi bi-{% if message.tags == 'success' %}check-circle{% else %}exclamation-triangle{% endif %}"></i>
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <form method="POST" action="{% url 'admin_login' %}">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label"><i class="bi bi-person"></i> Username or Email</label>
+                    <input type="text" name="username" class="form-control" placeholder="admin or admin@skillify.com" required autofocus>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label"><i class="bi bi-key"></i> Password</label>
+                    <input type="password" name="password" class="form-control" placeholder="Enter your password" required>
+                </div>
+                <button type="submit" class="btn-admin">
+                    <i class="bi bi-box-arrow-in-right"></i> Sign In to Admin Panel
+                </button>
+            </form>
+
+            <div class="back-link">
+                <a href="{% url 'index' %}"><i class="bi bi-arrow-left"></i> Back to Skillify</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

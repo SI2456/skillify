@@ -125,6 +125,8 @@
         <div class="nav-item-s" onclick="showTab('skills',this)"><i class="bi bi-lightbulb"></i> Skills</div>
         <div class="nav-item-s" onclick="showTab('sessions',this)"><i class="bi bi-calendar3"></i> Sessions</div>
         <div class="nav-item-s" onclick="showTab('reviews',this)"><i class="bi bi-star"></i> Reviews</div>
+        <div class="nav-item-s" onclick="showTab('admins',this)"><i class="bi bi-shield-lock"></i> Admins</div>
+        <div class="nav-item-s" onclick="showTab('pdfreports',this)"><i class="bi bi-file-earmark-pdf"></i> Reports</div>
     </div>
 
     <div class="nav-sec">
@@ -261,6 +263,71 @@
         </div>
     </div>
 
+    <!-- ADMINS -->
+    <div class="tab-section" id="tab-admins">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
+            <div>
+                <h3 class="page-title"><i class="bi bi-shield-lock"></i> Admin Management</h3>
+                <p class="page-subtitle">Manage administrators with platform access</p>
+            </div>
+            <button class="btn btn-sm" style="background:var(--gradient-teal);color:#fff;border:none;border-radius:10px;padding:9px 16px;font-weight:700;" onclick="openAddAdminModal()">
+                <i class="bi bi-plus-circle"></i> Add New Admin
+            </button>
+        </div>
+        <div class="panel-card">
+            <table class="admin-table">
+                <thead><tr><th>Admin</th><th>Email</th><th>Role</th><th>Joined</th><th>Actions</th></tr></thead>
+                <tbody id="adminsTable"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- PDF REPORTS -->
+    <div class="tab-section" id="tab-pdfreports">
+        <h3 class="page-title"><i class="bi bi-file-earmark-pdf"></i> PDF Reports</h3>
+        <p class="page-subtitle">Generate professional PDF reports for any time period</p>
+        <div class="panel-card" style="max-width:680px;">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label" style="font-weight:600;font-size:0.82rem;">Report Type</label>
+                    <select class="search-admin w-100" id="pdfReportType">
+                        <option value="full">Full Platform Report</option>
+                        <option value="users">Users Report</option>
+                        <option value="sessions">Sessions Report</option>
+                        <option value="bookings">Bookings Report</option>
+                        <option value="revenue">Revenue Report</option>
+                        <option value="tutors">Tutors Report</option>
+                        <option value="reviews">Reviews Report</option>
+                        <option value="reports_summary">Reports Summary</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label" style="font-weight:600;font-size:0.82rem;">Time Period</label>
+                    <select class="search-admin w-100" id="pdfPeriod" onchange="togglePdfCustom()">
+                        <option value="today">Today</option>
+                        <option value="7days">Last 7 Days</option>
+                        <option value="month">Last Month</option>
+                        <option value="3months">Last 3 Months</option>
+                        <option value="year">Last Year</option>
+                        <option value="all">All Time</option>
+                        <option value="custom">Custom Range</option>
+                    </select>
+                </div>
+                <div class="col-md-6 pdf-custom" style="display:none;">
+                    <label class="form-label" style="font-weight:600;font-size:0.82rem;">From Date</label>
+                    <input type="date" class="search-admin w-100" id="pdfDateFrom">
+                </div>
+                <div class="col-md-6 pdf-custom" style="display:none;">
+                    <label class="form-label" style="font-weight:600;font-size:0.82rem;">To Date</label>
+                    <input type="date" class="search-admin w-100" id="pdfDateTo">
+                </div>
+            </div>
+            <button class="btn w-100 mt-4" style="background:var(--gradient-teal);color:#fff;border:none;border-radius:10px;padding:14px;font-weight:700;font-size:0.95rem;" onclick="generatePdfReport()">
+                <i class="bi bi-download"></i> Generate PDF
+            </button>
+        </div>
+    </div>
+
     <!-- ANALYTICS -->
     <div class="tab-section" id="tab-analytics">
         <h3 class="page-title"><i class="bi bi-graph-up"></i> Analytics</h3>
@@ -282,13 +349,42 @@
     </div>
 </div>
 
+<!-- Add Admin Modal -->
+<div id="addAdminModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;padding:20px;">
+    <div style="background:var(--card);border-radius:18px;max-width:460px;width:100%;padding:28px;box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 style="font-weight:800;margin:0;"><i class="bi bi-shield-plus" style="color:var(--primary);"></i> Add New Admin</h5>
+            <button onclick="closeAddAdminModal()" style="background:none;border:none;font-size:1.4rem;color:var(--text-muted);cursor:pointer;">&times;</button>
+        </div>
+        <p class="page-subtitle mb-3">Create a new administrator account.</p>
+        <div class="mb-3">
+            <label class="form-label" style="font-weight:600;font-size:0.82rem;">Full Name</label>
+            <input type="text" class="search-admin w-100" id="newAdminName" placeholder="John Doe">
+        </div>
+        <div class="mb-3">
+            <label class="form-label" style="font-weight:600;font-size:0.82rem;">Email</label>
+            <input type="email" class="search-admin w-100" id="newAdminEmail" placeholder="admin@skillify.com">
+        </div>
+        <div class="mb-3">
+            <label class="form-label" style="font-weight:600;font-size:0.82rem;">Password</label>
+            <input type="password" class="search-admin w-100" id="newAdminPwd" placeholder="At least 6 characters">
+        </div>
+        <div class="d-flex gap-2 mt-4">
+            <button class="btn flex-grow-1" style="background:var(--gradient-teal);color:#fff;border:none;border-radius:10px;padding:11px;font-weight:700;" onclick="createAdmin()">
+                <i class="bi bi-check-circle"></i> Create Admin
+            </button>
+            <button class="btn" style="background:var(--bg-sec);color:var(--text);border:none;border-radius:10px;padding:11px 18px;font-weight:600;" onclick="closeAddAdminModal()">Cancel</button>
+        </div>
+    </div>
+</div>
+
 <script>
 function showTab(tab,el){
     document.querySelectorAll('.tab-section').forEach(s=>s.classList.remove('active'));
     document.querySelectorAll('.nav-item-s').forEach(n=>n.classList.remove('active'));
     document.getElementById('tab-'+tab).classList.add('active');
     if(el)el.classList.add('active');
-    const loaders={dashboard:loadDashboard,users:loadUsers,tutors:loadTutors,skills:loadSkills,sessions:loadSessions,reviews:loadReviews,disputes:loadDisputes,reports:loadReports,analytics:loadAnalytics};
+    const loaders={dashboard:loadDashboard,users:loadUsers,tutors:loadTutors,skills:loadSkills,sessions:loadSessions,reviews:loadReviews,disputes:loadDisputes,reports:loadReports,analytics:loadAnalytics,admins:loadAdmins};
     if(loaders[tab])loaders[tab]();
 }
 function api(u){return fetch(u).then(r=>r.json());}
@@ -365,8 +461,7 @@ function loadTutors(){
             <td><img src="${u.avatar}" class="avatar-sm">${u.name}</td><td>${u.email}</td>
             <td><strong style="color:var(--primary);">${u.trust_score.toFixed(0)}</strong>/100</td><td>${u.sessions_taught}</td><td>${u.balance}</td>
             <td><span class="b-role ${u.is_active?'b-active':'b-suspended'}">${u.is_active?'Active':'Suspended'}</span></td>
-            <td>${u.is_active?`<button class="btn-xs btn-outline-warning" onclick="userAction(${u.id},'suspend','${u.name}')">Suspend</button>`:`<button class="btn-xs btn-outline-success" onclick="userAction(${u.id},'activate','${u.name}')">Activate</button>`}
-            ${!u.is_staff?` <button class="btn-xs btn-outline-primary" onclick="userAction(${u.id},'make_admin','${u.name}')">Make Admin</button>`:''}</td>
+            <td>${u.is_active?`<button class="btn-xs btn-outline-warning" onclick="userAction(${u.id},'suspend','${u.name}')">Suspend</button>`:`<button class="btn-xs btn-outline-success" onclick="userAction(${u.id},'activate','${u.name}')">Activate</button>`}</td>
         </tr>`).join('');
     });
 }
@@ -595,6 +690,56 @@ function reportAction(id,action){
     post('/panel/api/report/'+id+'/action/',{action:action,admin_notes:notes?notes.value:''}).then(d=>{
         if(d.success){showToast(d.message);loadReports();}else alert(d.error);
     });
+}
+
+// ADMINS
+function loadAdmins(){
+    api('/panel/api/admins/').then(d=>{
+        document.getElementById('adminsTable').innerHTML=d.admins.map(a=>`<tr>
+            <td><img src="${a.avatar}" class="avatar-sm">${a.name}${a.is_superuser?' <span class="b-role b-tutor">Super</span>':''}</td>
+            <td>${a.email}</td>
+            <td><span class="b-role b-tutor">${a.role}</span></td>
+            <td>${a.joined}</td>
+            <td>${a.is_superuser?'<span class="b-role b-cancelled">Protected</span>':`<button class="btn-xs btn-outline-danger" onclick="removeAdmin(${a.id},'${a.name.replace(/'/g,"\\'")}')">Remove Admin</button>`}</td>
+        </tr>`).join('')||'<tr><td colspan="5" class="text-center py-3 text-muted">No admins yet</td></tr>';
+    });
+}
+function openAddAdminModal(){document.getElementById('addAdminModal').style.display='flex';}
+function closeAddAdminModal(){document.getElementById('addAdminModal').style.display='none';document.getElementById('newAdminName').value='';document.getElementById('newAdminEmail').value='';document.getElementById('newAdminPwd').value='';}
+function createAdmin(){
+    var name=document.getElementById('newAdminName').value.trim();
+    var email=document.getElementById('newAdminEmail').value.trim();
+    var pwd=document.getElementById('newAdminPwd').value;
+    if(!name||!email||!pwd){alert('All fields are required');return;}
+    if(pwd.length<6){alert('Password must be at least 6 characters');return;}
+    if(!confirm('Create new admin "'+name+'"? They will get full admin access, a tutor profile, and 100 credits.'))return;
+    post('/panel/api/admin/create/',{full_name:name,email:email,password:pwd}).then(d=>{
+        if(d.success){showToast(d.message);closeAddAdminModal();loadAdmins();}else alert(d.error);
+    });
+}
+function removeAdmin(id,name){
+    if(!confirm('⚠️ Remove admin access from "'+name+'"? They will no longer be able to access the admin panel. Their account will NOT be deleted.'))return;
+    post('/panel/api/admin/'+id+'/remove/',{}).then(d=>{
+        if(d.success){showToast(d.message);loadAdmins();}else alert(d.error);
+    });
+}
+
+// PDF REPORTS
+function togglePdfCustom(){
+    var v=document.getElementById('pdfPeriod').value;
+    document.querySelectorAll('.pdf-custom').forEach(function(el){el.style.display=v==='custom'?'block':'none';});
+}
+function generatePdfReport(){
+    var type=document.getElementById('pdfReportType').value;
+    var period=document.getElementById('pdfPeriod').value;
+    var df=document.getElementById('pdfDateFrom').value;
+    var dt=document.getElementById('pdfDateTo').value;
+    if(period==='custom'&&(!df||!dt)){alert('Please select both From and To dates');return;}
+    var url='/panel/generate-report/?type='+type+'&period='+period;
+    if(period==='custom')url+='&from='+df+'&to='+dt;
+    showToast('Generating PDF report...');
+    window.location.href=url;
+    setTimeout(function(){showToast('PDF report ready! Check your downloads.');},1500);
 }
 
 // TOAST

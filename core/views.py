@@ -170,6 +170,43 @@ def login_view(request):
     return render(request, 'core/login.html')
 
 
+def admin_login_view(request):
+    """Dedicated admin login at /admin-login/. Only staff users allowed."""
+    if request.method == 'POST':
+        username = request.POST.get('username', '').strip()
+        password = request.POST.get('password', '')
+
+        if not username or not password:
+            messages.error(request, 'Username and password are required.')
+            return render(request, 'core/admin_login.html')
+
+        # Allow either username or email
+        user_obj = None
+        try:
+            user_obj = User.objects.get(username=username)
+        except User.DoesNotExist:
+            try:
+                user_obj = User.objects.get(email=username)
+            except User.DoesNotExist:
+                messages.error(request, 'Invalid credentials.')
+                return render(request, 'core/admin_login.html')
+
+        user = authenticate(request, username=user_obj.username, password=password)
+        if user is None:
+            messages.error(request, 'Invalid credentials.')
+            return render(request, 'core/admin_login.html')
+
+        if not user.is_staff:
+            messages.error(request, 'Admin access only.')
+            return render(request, 'core/admin_login.html')
+
+        login(request, user)
+        messages.success(request, f'Welcome, {user.first_name or user.username}!')
+        return redirect('admin_panel')
+
+    return render(request, 'core/admin_login.html')
+
+
 def logout_view(request):
     logout(request)
     messages.success(request, 'Logged out successfully.')

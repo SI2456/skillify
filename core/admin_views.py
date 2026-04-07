@@ -2,10 +2,11 @@
 Skillify Custom Admin Panel Views
 All AJAX-powered API endpoints for the admin dashboard.
 """
+import io
 import json
-from datetime import timedelta
+from datetime import timedelta, datetime, date
 from django.shortcuts import render, get_object_or_404
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User
 from django.db.models import Avg, Count, Sum, Q
@@ -188,16 +189,6 @@ def admin_api_user_action(request, user_id):
         user.delete()
         return JsonResponse({'success': True, 'message': f'{name} deleted.'})
 
-    elif action == 'make_admin':
-        user.is_staff = True
-        user.save()
-        return JsonResponse({'success': True, 'message': f'{user.get_full_name()} is now admin.'})
-
-    elif action == 'remove_admin':
-        user.is_staff = False
-        user.save()
-        return JsonResponse({'success': True, 'message': f'{user.get_full_name()} admin removed.'})
-
     elif action == 'edit':
         if data.get('trust_score') is not None:
             user.profile.trust_score = float(data['trust_score'])
@@ -211,6 +202,122 @@ def admin_api_user_action(request, user_id):
         return JsonResponse({'success': True, 'message': 'User updated.'})
 
     return JsonResponse({'error': 'Unknown action'}, status=400)
+
+
+# ==================== ADMIN MANAGEMENT ====================
+
+@admin_required
+def admin_api_admins(request):
+    """List all current admins (staff users)."""
+    admins = User.objects.filter(is_staff=True).select_related('profile').order_by('-date_joined')
+    data = []
+    for u in admins:
+        try:
+            avatar = u.profile.avatar_url()
+            role = u.profile.role
+        except UserProfile.DoesNotExist:
+            avatar = ''
+            role = '—'
+        data.append({
+            'id': u.pk,
+            'name': u.get_full_name() or u.username,
+            'email': u.email,
+            'role': role,
+            'is_superuser': u.is_superuser,
+            'joined': u.date_joined.strftime('%b %d, %Y'),
+            'avatar': avatar,
+        })
+    return JsonResponse({'admins': data, 'total': len(data)})
+
+
+@csrf_exempt
+@admin_required
+def admin_api_admin_create(request):
+    """Create a new admin user."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=400)
+
+    data = json.loads(request.body)
+    full_name = data.get('full_name', '').strip()
+    email = data.get('email', '').strip().lower()
+    password = data.get('password', '')
+
+    if not full_name or not email or not password:
+        return JsonResponse({'error': 'Full name, email, and password are required'}, status=400)
+    if len(password) < 6:
+        return JsonResponse({'error': 'Password must be at least 6 characters'}, status=400)
+    if User.objects.filter(email=email).exists():
+        return JsonResponse({'error': 'A user with this email already exists'}, status=400)
+
+    parts = full_name.split(' ', 1)
+    first_name = parts[0]
+    last_name = parts[1] if len(parts) > 1 else ''
+
+    user = User.objects.create_user(
+        username=email,
+        email=email,
+        password=password,
+        first_name=first_name,
+        last_name=last_name,
+        is_active=True,
+        is_staff=True,
+    )
+
+    # Ensure profile exists with role=tutor (signal usually creates one)
+    profile, _ = UserProfile.objects.get_or_create(user=user)
+    profile.role = 'tutor'
+    profile.is_verified = True
+    profile.save()
+
+    # Ensure wallet exists with 100 credits
+    wallet, _ = Wallet.objects.get_or_create(user=user, defaults={'balance': 100})
+    if wallet.balance < 100:
+        wallet.balance = 100
+        wallet.save()
+
+    Notification.create_notification(
+        user, 'session_reminder',
+        'Welcome to Skillify Admin',
+        f'You have been added as an admin by {request.user.get_full_name() or request.user.username}.',
+        '/panel/'
+    )
+
+    return JsonResponse({
+        'success': True,
+        'message': f'Admin "{full_name}" created successfully.',
+        'admin': {
+            'id': user.pk,
+            'name': full_name,
+            'email': email,
+        }
+    })
+
+
+@csrf_exempt
+@admin_required
+def admin_api_admin_remove(request, user_id):
+    """Remove admin access from a user (sets is_staff=False; does NOT delete)."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=400)
+
+    user = get_object_or_404(User, pk=user_id)
+
+    if user.pk == request.user.pk:
+        return JsonResponse({'error': 'You cannot remove your own admin access'}, status=400)
+    if user.is_superuser:
+        return JsonResponse({'error': 'Cannot remove admin from a superuser'}, status=400)
+
+    user.is_staff = False
+    user.save()
+
+    Notification.create_notification(
+        user, 'session_reminder',
+        'Admin access removed',
+        f'Your admin access has been revoked by {request.user.get_full_name() or request.user.username}.',
+        '/dashboard/'
+    )
+
+    return JsonResponse({'success': True, 'message': f'Admin access removed from {user.get_full_name() or user.username}.'})
 
 
 # ==================== SKILL MANAGEMENT ====================
@@ -688,3 +795,424 @@ def admin_api_report_action(request, report_id):
         return JsonResponse({'success': True, 'message': 'Tutor notified. Awaiting response.'})
 
     return JsonResponse({'error': 'Unknown action'}, status=400)
+
+
+# ==================== PDF REPORT GENERATION ====================
+
+def _get_date_range(request):
+    """Resolve ?period=... &from=...&to=... into (start_date, end_date, label)."""
+    period = request.GET.get('period', 'all')
+    today = timezone.now().date()
+    if period == 'today':
+        return today, today, 'Today'
+    if period == '7days':
+        return today - timedelta(days=7), today, 'Last 7 Days'
+    if period == 'month':
+        return today - timedelta(days=30), today, 'Last Month'
+    if period == '3months':
+        return today - timedelta(days=90), today, 'Last 3 Months'
+    if period == 'year':
+        return today - timedelta(days=365), today, 'Last Year'
+    if period == 'custom':
+        try:
+            df = datetime.strptime(request.GET.get('from', ''), '%Y-%m-%d').date()
+            dt = datetime.strptime(request.GET.get('to', ''), '%Y-%m-%d').date()
+            return df, dt, f'{df.strftime("%b %d, %Y")} → {dt.strftime("%b %d, %Y")}'
+        except (ValueError, TypeError):
+            return None, None, 'All Time'
+    return None, None, 'All Time'
+
+
+@login_required
+@user_passes_test(is_admin)
+def generate_pdf_report(request):
+    """Generate a PDF report based on type + date range and return as download."""
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib import colors
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import mm
+    from reportlab.platypus import (
+        SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak
+    )
+    from reportlab.pdfgen import canvas
+
+    report_type = request.GET.get('type', 'full')
+    start_date, end_date, period_label = _get_date_range(request)
+
+    # Skillify teal theme
+    TEAL = colors.HexColor('#4ECDC4')
+    TEAL_DARK = colors.HexColor('#3BABA3')
+    DARK = colors.HexColor('#2D3748')
+    MUTED = colors.HexColor('#718096')
+    LIGHT = colors.HexColor('#F0F4F8')
+
+    buffer = io.BytesIO()
+
+    def header_footer(canv, doc):
+        """Draw the teal header bar + footer with page number on every page."""
+        canv.saveState()
+        page_w, page_h = A4
+        # Header bar
+        canv.setFillColor(TEAL)
+        canv.rect(0, page_h - 22 * mm, page_w, 22 * mm, fill=1, stroke=0)
+        canv.setFillColor(colors.white)
+        canv.setFont('Helvetica-Bold', 18)
+        canv.drawString(15 * mm, page_h - 12 * mm, 'Skillify')
+        canv.setFont('Helvetica', 9)
+        canv.drawString(15 * mm, page_h - 18 * mm, 'Learn Skills. Share Knowledge.')
+        canv.setFont('Helvetica-Bold', 10)
+        canv.drawRightString(page_w - 15 * mm, page_h - 12 * mm, 'Admin Report')
+        canv.setFont('Helvetica', 8)
+        canv.drawRightString(
+            page_w - 15 * mm, page_h - 17 * mm,
+            f'Generated: {timezone.now().strftime("%b %d, %Y %H:%M")}'
+        )
+        # Footer
+        canv.setStrokeColor(TEAL)
+        canv.setLineWidth(1)
+        canv.line(15 * mm, 15 * mm, page_w - 15 * mm, 15 * mm)
+        canv.setFillColor(MUTED)
+        canv.setFont('Helvetica', 8)
+        canv.drawString(15 * mm, 10 * mm, '© Skillify Platform — Confidential')
+        canv.drawRightString(page_w - 15 * mm, 10 * mm, f'Page {doc.page}')
+        canv.restoreState()
+
+    doc = SimpleDocTemplate(
+        buffer, pagesize=A4,
+        leftMargin=15 * mm, rightMargin=15 * mm,
+        topMargin=30 * mm, bottomMargin=20 * mm,
+    )
+
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        'TitleS', parent=styles['Heading1'], fontSize=20, textColor=DARK,
+        alignment=0, spaceAfter=4, fontName='Helvetica-Bold'
+    )
+    subtitle_style = ParagraphStyle(
+        'SubS', parent=styles['Normal'], fontSize=10, textColor=MUTED, spaceAfter=14
+    )
+    section_style = ParagraphStyle(
+        'SectS', parent=styles['Heading2'], fontSize=13, textColor=TEAL_DARK,
+        spaceAfter=8, spaceBefore=14, fontName='Helvetica-Bold'
+    )
+
+    titles_map = {
+        'full': 'Full Platform Report',
+        'users': 'Users Report',
+        'sessions': 'Sessions Report',
+        'bookings': 'Bookings Report',
+        'revenue': 'Revenue Report',
+        'tutors': 'Tutors Report',
+        'reviews': 'Reviews Report',
+        'reports_summary': 'Session Reports Summary',
+    }
+    report_title = titles_map.get(report_type, 'Skillify Report')
+
+    story = []
+    story.append(Paragraph(report_title, title_style))
+    story.append(Paragraph(f'Period: <b>{period_label}</b>', subtitle_style))
+
+    def make_table(headers, rows, col_widths=None):
+        data = [headers] + rows
+        tbl = Table(data, colWidths=col_widths, repeatRows=1)
+        tbl.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), TEAL),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 9),
+            ('FONTSIZE', (0, 1), (-1, -1), 8),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
+            ('TOPPADDING', (0, 0), (-1, 0), 8),
+            ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
+            ('TOPPADDING', (0, 1), (-1, -1), 6),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, LIGHT]),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#E2E8F0')),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('TEXTCOLOR', (0, 1), (-1, -1), DARK),
+        ]))
+        return tbl
+
+    def make_summary(items):
+        """4-column stat summary cards."""
+        rows = []
+        row = []
+        for label, value in items:
+            row.append([
+                Paragraph(f'<font size=14 color="#3BABA3"><b>{value}</b></font>', styles['Normal']),
+                Paragraph(f'<font size=8 color="#718096">{label.upper()}</font>', styles['Normal']),
+            ])
+            if len(row) == 4:
+                rows.append(row)
+                row = []
+        if row:
+            while len(row) < 4:
+                row.append(['', ''])
+            rows.append(row)
+
+        for r in rows:
+            cells = []
+            for cell in r:
+                if isinstance(cell, list):
+                    sub = Table([[cell[0]], [cell[1]]], colWidths=[42 * mm])
+                    sub.setStyle(TableStyle([
+                        ('BACKGROUND', (0, 0), (-1, -1), LIGHT),
+                        ('BOX', (0, 0), (-1, -1), 1, TEAL),
+                        ('LEFTPADDING', (0, 0), (-1, -1), 8),
+                        ('RIGHTPADDING', (0, 0), (-1, -1), 8),
+                        ('TOPPADDING', (0, 0), (-1, -1), 6),
+                        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+                    ]))
+                    cells.append(sub)
+                else:
+                    cells.append('')
+            outer = Table([cells], colWidths=[44 * mm] * 4)
+            outer.setStyle(TableStyle([('VALIGN', (0, 0), (-1, -1), 'TOP')]))
+            story.append(outer)
+            story.append(Spacer(1, 6))
+
+    # Filter helper for date range
+    def filter_qs(qs, field):
+        if start_date and end_date:
+            return qs.filter(**{f'{field}__date__gte': start_date, f'{field}__date__lte': end_date})
+        return qs
+
+    def filter_qs_date(qs, field):
+        if start_date and end_date:
+            return qs.filter(**{f'{field}__gte': start_date, f'{field}__lte': end_date})
+        return qs
+
+    # ============ DATA SECTIONS ============
+
+    def section_users():
+        story.append(Paragraph('Users', section_style))
+        users_qs = filter_qs(User.objects.select_related('profile', 'wallet'), 'date_joined').order_by('-date_joined')
+        rows = []
+        for u in users_qs[:200]:
+            try:
+                role = u.profile.get_role_display()
+                bal = u.wallet.balance
+            except Exception:
+                role, bal = '—', 0
+            sessions = Booking.objects.filter(learner=u).count()
+            rows.append([
+                u.get_full_name() or u.username,
+                u.email[:30],
+                role,
+                u.date_joined.strftime('%b %d, %Y'),
+                str(sessions),
+                str(bal),
+            ])
+        story.append(make_table(
+            ['Name', 'Email', 'Role', 'Joined', 'Bookings', 'Balance'],
+            rows or [['No data', '', '', '', '', '']],
+            col_widths=[35 * mm, 45 * mm, 18 * mm, 25 * mm, 20 * mm, 20 * mm],
+        ))
+
+    def section_sessions():
+        story.append(Paragraph('Sessions', section_style))
+        sess_qs = filter_qs(Session.objects.select_related('tutor', 'skill'), 'created_at').order_by('-date')
+        rows = []
+        for s in sess_qs[:200]:
+            rows.append([
+                s.title[:32],
+                (s.tutor.get_full_name() or s.tutor.username)[:22],
+                s.skill.name[:18],
+                s.date.strftime('%b %d, %Y'),
+                s.status,
+                str(s.bookings.count()),
+            ])
+        story.append(make_table(
+            ['Session', 'Tutor', 'Skill', 'Date', 'Status', 'Bookings'],
+            rows or [['No data', '', '', '', '', '']],
+            col_widths=[50 * mm, 35 * mm, 25 * mm, 25 * mm, 22 * mm, 18 * mm],
+        ))
+
+    def section_bookings():
+        story.append(Paragraph('Bookings', section_style))
+        b_qs = filter_qs(Booking.objects.select_related('learner', 'session', 'session__tutor'), 'booked_at').order_by('-booked_at')
+        rows = []
+        for b in b_qs[:200]:
+            rows.append([
+                (b.learner.get_full_name() or b.learner.username)[:22],
+                (b.session.tutor.get_full_name() or b.session.tutor.username)[:22],
+                b.session.title[:30],
+                b.status,
+                str(b.credits_paid),
+                b.booked_at.strftime('%b %d'),
+            ])
+        story.append(make_table(
+            ['Learner', 'Tutor', 'Session', 'Status', 'Credits', 'Date'],
+            rows or [['No data', '', '', '', '', '']],
+            col_widths=[32 * mm, 32 * mm, 45 * mm, 25 * mm, 18 * mm, 22 * mm],
+        ))
+
+    def section_revenue():
+        story.append(Paragraph('Revenue (Razorpay Payments)', section_style))
+        p_qs = filter_qs(Payment.objects.filter(status='paid').select_related('user'), 'created_at').order_by('-created_at')
+        total_revenue = sum(p.amount_inr for p in p_qs) // 100
+        total_credits = sum(p.credits for p in p_qs)
+        make_summary([
+            ('Total Revenue', f'₹{total_revenue}'),
+            ('Credits Sold', str(total_credits)),
+            ('Paid Orders', str(p_qs.count())),
+            ('Avg Order', f'₹{total_revenue // p_qs.count() if p_qs.count() else 0}'),
+        ])
+        rows = []
+        for p in p_qs[:150]:
+            rows.append([
+                (p.user.get_full_name() or p.user.username)[:25],
+                f'₹{p.amount_inr // 100}',
+                str(p.credits),
+                (p.razorpay_payment_id or '—')[:22],
+                p.created_at.strftime('%b %d, %Y'),
+            ])
+        story.append(make_table(
+            ['User', 'Amount', 'Credits', 'Payment ID', 'Date'],
+            rows or [['No data', '', '', '', '']],
+            col_widths=[42 * mm, 22 * mm, 22 * mm, 48 * mm, 28 * mm],
+        ))
+
+    def section_tutors():
+        story.append(Paragraph('Tutors', section_style))
+        tutors = UserProfile.objects.filter(role='tutor').select_related('user', 'user__wallet')
+        rows = []
+        for t in tutors[:200]:
+            earnings = Transaction.objects.filter(
+                wallet=t.user.wallet, transaction_type='tutor_earning'
+            ).aggregate(total=Sum('amount'))['total'] or 0
+            sessions_done = Session.objects.filter(tutor=t.user, status='completed').count()
+            rows.append([
+                (t.user.get_full_name() or t.user.username)[:25],
+                f'{t.average_rating()}/5',
+                str(sessions_done),
+                f'{t.trust_score:.0f}/100',
+                str(earnings),
+            ])
+        story.append(make_table(
+            ['Tutor', 'Avg Rating', 'Sessions', 'Trust', 'Earnings'],
+            rows or [['No data', '', '', '', '']],
+            col_widths=[55 * mm, 25 * mm, 25 * mm, 25 * mm, 32 * mm],
+        ))
+
+    def section_reviews():
+        story.append(Paragraph('Reviews', section_style))
+        r_qs = filter_qs(Review.objects.select_related('reviewer', 'tutor', 'session'), 'created_at').order_by('-created_at')
+        rows = []
+        for r in r_qs[:200]:
+            rows.append([
+                f'{r.rating}/5 ★',
+                (r.tutor.get_full_name() or r.tutor.username)[:22],
+                (r.reviewer.get_full_name() or r.reviewer.username)[:22],
+                (r.comment[:48] + '…') if len(r.comment) > 48 else (r.comment or '—'),
+                r.created_at.strftime('%b %d, %Y'),
+            ])
+        story.append(make_table(
+            ['Rating', 'Tutor', 'Reviewer', 'Comment', 'Date'],
+            rows or [['No data', '', '', '', '']],
+            col_widths=[18 * mm, 32 * mm, 32 * mm, 60 * mm, 25 * mm],
+        ))
+
+    def section_reports_summary():
+        story.append(Paragraph('Session Reports Summary', section_style))
+        rep_qs = filter_qs(SessionReport.objects.select_related('reporter', 'tutor', 'booking__session'), 'created_at').order_by('-created_at')
+        rows = []
+        for r in rep_qs[:200]:
+            rows.append([
+                r.get_report_type_display()[:20],
+                (r.tutor.get_full_name() or r.tutor.username)[:22],
+                (r.reporter.get_full_name() or r.reporter.username)[:22],
+                r.get_verdict_display()[:20],
+                str(r.auto_score),
+                r.created_at.strftime('%b %d'),
+            ])
+        story.append(make_table(
+            ['Type', 'Tutor', 'Reporter', 'Verdict', 'Score', 'Date'],
+            rows or [['No data', '', '', '', '', '']],
+            col_widths=[32 * mm, 30 * mm, 30 * mm, 32 * mm, 18 * mm, 22 * mm],
+        ))
+
+    def section_full_summary():
+        story.append(Paragraph('Platform Overview', section_style))
+        users_count = filter_qs(User.objects.all(), 'date_joined').count()
+        sess_count = filter_qs(Session.objects.all(), 'created_at').count()
+        book_count = filter_qs(Booking.objects.all(), 'booked_at').count()
+        rev_qs = filter_qs(Payment.objects.filter(status='paid'), 'created_at')
+        revenue = sum(p.amount_inr for p in rev_qs) // 100
+        tutor_count = UserProfile.objects.filter(role='tutor').count()
+        review_count = filter_qs(Review.objects.all(), 'created_at').count()
+        disputes = Booking.objects.filter(is_disputed=True).count()
+        credits_in = Wallet.objects.aggregate(total=Sum('balance'))['total'] or 0
+        make_summary([
+            ('Users', str(users_count)),
+            ('Tutors', str(tutor_count)),
+            ('Sessions', str(sess_count)),
+            ('Bookings', str(book_count)),
+            ('Revenue', f'₹{revenue}'),
+            ('Reviews', str(review_count)),
+            ('Disputes', str(disputes)),
+            ('Credits', str(credits_in)),
+        ])
+
+        # Top tutors
+        story.append(Paragraph('Top Tutors by Earnings', section_style))
+        top_rows = []
+        for t in UserProfile.objects.filter(role='tutor').select_related('user', 'user__wallet')[:50]:
+            earnings = Transaction.objects.filter(
+                wallet=t.user.wallet, transaction_type='tutor_earning'
+            ).aggregate(total=Sum('amount'))['total'] or 0
+            top_rows.append((earnings, [
+                (t.user.get_full_name() or t.user.username)[:30],
+                f'{t.average_rating()}/5',
+                str(t.user.tutor_sessions.filter(status='completed').count()),
+                str(earnings),
+            ]))
+        top_rows.sort(key=lambda x: -x[0])
+        story.append(make_table(
+            ['Tutor', 'Rating', 'Sessions', 'Earnings'],
+            [r[1] for r in top_rows[:10]] or [['No data', '', '', '']],
+            col_widths=[70 * mm, 30 * mm, 30 * mm, 35 * mm],
+        ))
+
+        # Recent revenue
+        story.append(Paragraph('Recent Revenue', section_style))
+        rows = []
+        for p in rev_qs.select_related('user').order_by('-created_at')[:10]:
+            rows.append([
+                (p.user.get_full_name() or p.user.username)[:25],
+                f'₹{p.amount_inr // 100}',
+                str(p.credits),
+                p.created_at.strftime('%b %d, %Y'),
+            ])
+        story.append(make_table(
+            ['User', 'Amount', 'Credits', 'Date'],
+            rows or [['No data', '', '', '']],
+            col_widths=[60 * mm, 30 * mm, 30 * mm, 45 * mm],
+        ))
+
+    # Dispatch by report type
+    if report_type == 'users':
+        section_users()
+    elif report_type == 'sessions':
+        section_sessions()
+    elif report_type == 'bookings':
+        section_bookings()
+    elif report_type == 'revenue':
+        section_revenue()
+    elif report_type == 'tutors':
+        section_tutors()
+    elif report_type == 'reviews':
+        section_reviews()
+    elif report_type == 'reports_summary':
+        section_reports_summary()
+    else:  # full
+        section_full_summary()
+
+    doc.build(story, onFirstPage=header_footer, onLaterPages=header_footer)
+
+    pdf_data = buffer.getvalue()
+    buffer.close()
+
+    filename = f'skillify_{report_type}_{timezone.now().strftime("%Y%m%d_%H%M%S")}.pdf'
+    response = HttpResponse(pdf_data, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    return response

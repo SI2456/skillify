@@ -1,5 +1,5 @@
 from django.urls import path
-from . import views
+from . import views, admin_views
 
 urlpatterns = [
     # Public pages
@@ -8,6 +8,7 @@ urlpatterns = [
     # Auth
     path('register/', views.register_view, name='register'),
     path('login/', views.login_view, name='login'),
+    path('admin-login/', views.admin_login_view, name='admin_login'),
     path('logout/', views.logout_view, name='logout'),
     path('verify-otp/', views.verify_otp_view, name='verify_otp'),
     path('resend-otp/', views.resend_otp_view, name='resend_otp'),
@@ -103,4 +104,12 @@ urlpatterns = [
     path('panel/api/analytics/', views.admin_api_analytics, name='admin_api_analytics'),
     path('panel/api/reports/', views.admin_api_reports, name='admin_api_reports'),
     path('panel/api/report/<int:report_id>/action/', views.admin_api_report_action, name='admin_api_report_action'),
+
+    # Admin management
+    path('panel/api/admins/', admin_views.admin_api_admins, name='admin_api_admins'),
+    path('panel/api/admin/create/', admin_views.admin_api_admin_create, name='admin_api_admin_create'),
+    path('panel/api/admin/<int:user_id>/remove/', admin_views.admin_api_admin_remove, name='admin_api_admin_remove'),
+
+    # PDF Reports
+    path('panel/generate-report/', admin_views.generate_pdf_report, name='generate_pdf_report'),
 ]
