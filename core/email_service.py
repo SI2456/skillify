@@ -17,8 +17,40 @@ SITE_URL = os.environ.get('SITE_URL', 'http://127.0.0.1:8000')
 
 def _send_email_sync(subject, html_content, plain_text, to_email):
     """Actual email send — runs in a background thread.
-    Tries Resend API first (works on Render Free), falls back to SMTP."""
-    # Try Resend API first
+    Provider priority: Brevo → Resend → SMTP.
+    Brevo works on Render Free and delivers to ANY email address."""
+
+    # 1. Try Brevo API first (best for Render Free, any recipient)
+    brevo_key = os.environ.get('BREVO_API_KEY', '')
+    if brevo_key:
+        try:
+            import requests
+            from_email = os.environ.get('DEFAULT_FROM_EMAIL', 'noreply@skillify.com')
+            response = requests.post(
+                'https://api.brevo.com/v3/smtp/email',
+                headers={
+                    'api-key': brevo_key,
+                    'content-type': 'application/json',
+                    'accept': 'application/json',
+                },
+                json={
+                    'sender': {'name': 'Skillify', 'email': from_email},
+                    'to': [{'email': to_email}],
+                    'subject': subject,
+                    'htmlContent': html_content,
+                    'textContent': plain_text,
+                },
+                timeout=15,
+            )
+            if response.status_code in (200, 201):
+                print(f'✅ Email sent via Brevo to {to_email}: {subject}', flush=True)
+                return True
+            else:
+                print(f'⚠️ Brevo failed ({response.status_code}): {response.text}', flush=True)
+        except Exception as e:
+            print(f'⚠️ Brevo error: {e}', flush=True)
+
+    # 2. Fallback to Resend (owner's email only on test domain)
     resend_key = os.environ.get('RESEND_API_KEY', '')
     if resend_key:
         try:
@@ -36,7 +68,7 @@ def _send_email_sync(subject, html_content, plain_text, to_email):
         except Exception as e:
             print(f'⚠️ Resend failed, trying SMTP: {e}', flush=True)
 
-    # Fallback to SMTP (Gmail etc.)
+    # 3. Final fallback: SMTP (Gmail etc.)
     try:
         msg = EmailMultiAlternatives(
             subject=subject,
