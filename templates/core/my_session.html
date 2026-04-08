@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="{% static 'css/my_session.css' %}">
     <link rel="icon" type="image/svg+xml" href="{% static 'favicon.svg' %}">
     <link rel="stylesheet" href="{% static 'css/dark-mode.css' %}">
+    <script>(function(){try{var t=localStorage.getItem('skillify-theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();</script>
     <link rel="stylesheet" href="{% static 'css/mobile.css' %}">
 </head>
 <body>
@@ -688,6 +689,6 @@
     @keyframes scaleIn { from { transform: scale(0); } to { transform: scale(1); } }
     </style>
     {% include "core/chatbot_widget.html" %}
-    <script src="{% static 'js/dark-mode.js' %}"></script>
+    <script src="{% static 'js/dark-mode.js' %}" defer></script>
 </body>
 </html>

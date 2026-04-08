@@ -98,6 +98,7 @@
     </style>
     <link rel="icon" type="image/svg+xml" href="{% static 'favicon.svg' %}">
     <link rel="stylesheet" href="{% static 'css/dark-mode.css' %}">
+    <script>(function(){try{var t=localStorage.getItem('skillify-theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();</script>
     <link rel="stylesheet" href="{% static 'css/mobile.css' %}">
 </head>
 <body>
@@ -377,6 +378,6 @@
     </script>
     {% comment %}Chatbot hidden on chat page to avoid overlapping send button{% endcomment %}
     <style>#chatbotWidget { display: none !important; }</style>
-    <script src="{% static 'js/dark-mode.js' %}"></script>
+    <script src="{% static 'js/dark-mode.js' %}" defer></script>
 </body>
 </html>
