@@ -25,10 +25,16 @@ def _send_email_sync(subject, html_content, plain_text, to_email):
             to=[to_email],
         )
         msg.attach_alternative(html_content, 'text/html')
-        msg.send(fail_silently=True)
+        msg.send(fail_silently=False)
         logger.info(f'Email sent to {to_email}: {subject}')
+        print(f'✅ Email sent to {to_email}: {subject}', flush=True)
+        return True
     except Exception as e:
         logger.error(f'Failed to send email to {to_email}: {e}')
+        print(f'❌ EMAIL ERROR: {e}', flush=True)
+        import traceback
+        traceback.print_exc()
+        return False
 
 
 def _send_html_email(subject, template, context, to_email):
@@ -50,6 +56,9 @@ def _send_html_email(subject, template, context, to_email):
         return True
     except Exception as e:
         logger.error(f'Failed to render email template for {to_email}: {e}')
+        print(f'❌ EMAIL TEMPLATE ERROR: {e}', flush=True)
+        import traceback
+        traceback.print_exc()
         return False
 
 
