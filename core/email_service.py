@@ -16,7 +16,27 @@ SITE_URL = os.environ.get('SITE_URL', 'http://127.0.0.1:8000')
 
 
 def _send_email_sync(subject, html_content, plain_text, to_email):
-    """Actual SMTP send — runs in a background thread."""
+    """Actual email send — runs in a background thread.
+    Tries Resend API first (works on Render Free), falls back to SMTP."""
+    # Try Resend API first
+    resend_key = os.environ.get('RESEND_API_KEY', '')
+    if resend_key:
+        try:
+            import resend
+            resend.api_key = resend_key
+            from_email = os.environ.get('DEFAULT_FROM_EMAIL', 'onboarding@resend.dev')
+            resend.Emails.send({
+                "from": from_email,
+                "to": [to_email],
+                "subject": subject,
+                "html": html_content,
+            })
+            print(f'✅ Email sent via Resend to {to_email}: {subject}', flush=True)
+            return True
+        except Exception as e:
+            print(f'⚠️ Resend failed, trying SMTP: {e}', flush=True)
+
+    # Fallback to SMTP (Gmail etc.)
     try:
         msg = EmailMultiAlternatives(
             subject=subject,
@@ -26,8 +46,7 @@ def _send_email_sync(subject, html_content, plain_text, to_email):
         )
         msg.attach_alternative(html_content, 'text/html')
         msg.send(fail_silently=False)
-        logger.info(f'Email sent to {to_email}: {subject}')
-        print(f'✅ Email sent to {to_email}: {subject}', flush=True)
+        print(f'✅ Email sent via SMTP to {to_email}: {subject}', flush=True)
         return True
     except Exception as e:
         logger.error(f'Failed to send email to {to_email}: {e}')
