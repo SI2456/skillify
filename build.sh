@@ -29,3 +29,6 @@ site.name = 'Skillify'
 site.save()
 print(f'Site updated: {domain}')
 "
+
+# Seed demo sessions (future-dated for Browse Skills page)
+python manage.py seed_demo_sessions --clear --count 3
