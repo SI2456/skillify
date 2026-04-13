@@ -301,6 +301,33 @@ html, body, * {
     color: var(--text-muted) !important;
 }
 
+/* ---------- MESSAGE BADGE ---------- */
+.message-badge {
+    animation: badge-pulse 2s ease-in-out infinite;
+    font-weight: 600;
+    min-width: 22px;
+    text-align: center;
+    vertical-align: top;
+    font-size: 0.7rem !important;
+    padding: 0.25em 0.5em !important;
+}
+
+@keyframes badge-pulse {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.5);
+    }
+    50% {
+        transform: scale(1.08);
+        box-shadow: 0 0 0 4px rgba(220, 53, 69, 0);
+    }
+}
+
+[data-theme="dark"] .message-badge {
+    background-color: #ef4444 !important;
+    color: white !important;
+}
+
 /* ---------- FLOATING THEME TOGGLE BUTTON ---------- */
 #skillify-theme-toggle {
     position: fixed;

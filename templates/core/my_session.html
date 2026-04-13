@@ -24,7 +24,7 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto align-items-center">
                     <li class="nav-item"><a class="nav-link" href="{% url 'dashboard' %}">Dashboard</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'inbox' %}"><i class="bi bi-chat-dots"></i> Messages</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'inbox' %}"><i class="bi bi-chat-dots"></i> Messages{% if unread_messages_count > 0 %} <span class="badge rounded-pill bg-danger ms-1 message-badge">{% if unread_messages_count > 99 %}99+{% else %}{{ unread_messages_count }}{% endif %}</span>{% endif %}</a></li>
                     <li class="nav-item"><a class="nav-link" href="{% url 'browse_skills' %}">Browse Skills</a></li>
                     <li class="nav-item"><a class="nav-link active" href="{% url 'my_sessions' %}">My Sessions</a></li>
                     <li class="nav-item"><a class="nav-link" href="{% url 'wallet' %}"><i class="bi bi-wallet2"></i> {{ wallet.balance }} credits</a></li>
@@ -690,5 +690,6 @@
     </style>
     {% include "core/chatbot_widget.html" %}
     <script src="{% static 'js/dark-mode.js' %}" defer></script>
+<script src="{% static 'js/message-badge.js' %}" defer></script>
 </body>
 </html>
