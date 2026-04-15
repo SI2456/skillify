@@ -301,6 +301,42 @@ html, body, * {
     color: var(--text-muted) !important;
 }
 
+/* ---------- EMPTY STATE ---------- */
+.empty-state {
+    padding: 3rem 1rem;
+    background: rgba(78, 205, 196, 0.03);
+    border: 2px dashed rgba(78, 205, 196, 0.2);
+    border-radius: 16px;
+}
+
+.empty-state-icon {
+    animation: empty-float 3s ease-in-out infinite;
+}
+
+@keyframes empty-float {
+    0%, 100% { transform: translateY(0); }
+    50%     { transform: translateY(-8px); }
+}
+
+[data-theme="dark"] .empty-state {
+    background: rgba(78, 205, 196, 0.05) !important;
+    border-color: rgba(78, 205, 196, 0.2) !important;
+}
+
+[data-theme="dark"] .empty-state h4,
+[data-theme="dark"] .empty-state h5 {
+    color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .empty-state p,
+[data-theme="dark"] .empty-state .text-muted {
+    color: var(--text-secondary) !important;
+}
+
+[data-theme="dark"] .empty-state-icon i {
+    color: #475569 !important;
+}
+
 /* ---------- MESSAGE BADGE ---------- */
 .message-badge {
     animation: badge-pulse 2s ease-in-out infinite;

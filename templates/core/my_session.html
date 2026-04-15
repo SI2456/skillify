@@ -70,8 +70,9 @@
 
 
             <!-- Tutor: Show created sessions -->
-            {% if profile.role == 'tutor' and sessions %}
+            {% if profile.role == 'tutor' %}
             <h5 class="mb-3"><i class="bi bi-list-check"></i> Your Sessions</h5>
+            {% if sessions %}
             <div class="sessions-grid">
                 {% for session in sessions %}
                 <div class="session-card session-upcoming">
@@ -238,6 +239,23 @@
                 </div>
                 {% endfor %}
             </div>
+            {% else %}
+            <div class="empty-state text-center py-5 my-4">
+                <div class="empty-state-icon mb-3">
+                    <i class="bi bi-camera-video-off" style="font-size:5rem;color:#cbd5e0;opacity:0.6;"></i>
+                </div>
+                <h4 class="fw-semibold text-muted mb-2">No teaching sessions yet</h4>
+                <p class="text-muted mb-4">Create your first session and start sharing your knowledge!</p>
+                <a href="{% url 'create_session' %}" class="btn btn-lg" style="background:#4ECDC4;color:white;border:none;padding:12px 32px;border-radius:10px;">
+                    <i class="bi bi-plus-circle-fill me-2"></i> Create Your First Session
+                </a>
+                <div class="mt-4 d-flex justify-content-center gap-3 small text-muted flex-wrap">
+                    <span><i class="bi bi-check-circle text-success me-1"></i> Earn credits</span>
+                    <span><i class="bi bi-check-circle text-success me-1"></i> Build your reputation</span>
+                    <span><i class="bi bi-check-circle text-success me-1"></i> Help others learn</span>
+                </div>
+            </div>
+            {% endif %}
             {% endif %}
 
             <!-- Learner: Show bookings -->
