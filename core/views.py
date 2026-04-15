@@ -1,6 +1,7 @@
 import random
 import string
 from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
@@ -463,7 +464,7 @@ def browse_skills_view(request):
             pass
 
     # Sort
-    sort_by = request.GET.get('sort', 'soonest')
+    sort_by = request.GET.get('sort', 'newest')
     if sort_by == 'price_low':
         sessions = sessions.order_by('credits_required', 'date')
     elif sort_by == 'price_high':
@@ -711,6 +712,7 @@ def learner_profile_view(request):
 
 @login_required
 def my_sessions_view(request):
+    just_booked_id = request.GET.get('booked')
     profile = request.user.profile
     wallet = request.user.wallet
 
@@ -738,6 +740,7 @@ def my_sessions_view(request):
         'bookings': bookings,
         'upcoming_bookings': upcoming,
         'completed_bookings': completed,
+        'just_booked_id': just_booked_id,
     }
     return render(request, 'core/my_session.html', context)
 
@@ -888,7 +891,7 @@ def book_session_view(request, session_id):
         f'Session "{session.title}" booked! {session.credits_required} credits deducted. '
         f'Confirmation email sent. Check My Sessions for details.'
     )
-    return redirect('my_sessions')
+    return redirect(f'{reverse("my_sessions")}?booked={booking.id}')
 
 
 # ==================== DUAL CONFIRMATION SYSTEM ====================

@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
     <link rel="icon" type="image/svg+xml" href="{% static 'favicon.svg' %}">
     <link rel="stylesheet" href="{% static 'css/dark-mode.css' %}">
+    <link rel="stylesheet" href="{% static 'css/components.css' %}">
     <script>(function(){try{var t=localStorage.getItem('skillify-theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();</script>
     <link rel="stylesheet" href="{% static 'css/mobile.css' %}">
 </head>
@@ -233,14 +234,15 @@
                                 </div>
                                 {% endfor %}
                             {% else %}
-                                <div class="text-center py-4 text-muted">
-                                    <i class="bi bi-calendar-x" style="font-size:2rem;"></i>
-                                    <p class="mt-2">No upcoming sessions</p>
-                                    {% if profile.role == 'learner' %}
-                                    <a href="{% url 'browse_skills' %}" class="btn btn-primary btn-sm">Browse & Book</a>
-                                    {% else %}
-                                    <a href="{% url 'create_session' %}" class="btn btn-primary btn-sm">Create Session</a>
-                                    {% endif %}
+                                <div class="empty-state text-center py-5">
+                                    <div class="empty-state-icon mb-3">
+                                        <i class="bi bi-calendar-x" style="font-size:4rem;color:#cbd5e0;"></i>
+                                    </div>
+                                    <h5 class="text-muted fw-semibold">No upcoming sessions</h5>
+                                    <p class="text-muted small mb-3">Browse sessions to start learning something new</p>
+                                    <a href="{% url 'browse_skills' %}" class="btn btn-primary" style="background:#4ECDC4;border:none;">
+                                        <i class="bi bi-search me-1"></i> Browse Sessions
+                                    </a>
                                 </div>
                             {% endif %}
                         </div>
@@ -278,6 +280,35 @@
     <script src="{% static 'js/dashboard.js' %}"></script>
     {% include "core/chatbot_widget.html" %}
     <script src="{% static 'js/dark-mode.js' %}" defer></script>
+    <script src="{% static 'js/form-loaders.js' %}" defer></script>
 <script src="{% static 'js/message-badge.js' %}" defer></script>
+    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index:10000;">
+        {% for message in messages %}
+        <div class="toast skillify-toast align-items-center text-white border-0 show mb-2"
+             role="alert" data-bs-autohide="true" data-bs-delay="4500"
+             data-bg="{{ message.tags }}">
+            <div class="d-flex">
+                <div class="toast-body d-flex align-items-center gap-2">
+                    <i class="bi bi-{% if message.tags == 'success' %}check-circle-fill{% elif message.tags == 'error' or message.tags == 'danger' %}x-circle-fill{% elif message.tags == 'warning' %}exclamation-triangle-fill{% else %}info-circle-fill{% endif %}" style="font-size:1.1rem;flex-shrink:0;"></i>
+                    <span>{{ message }}</span>
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    <button id="backToTop" class="back-to-top-btn" aria-label="Back to top"><i class="bi bi-arrow-up"></i></button>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.skillify-toast').forEach(function(el) {
+            new bootstrap.Toast(el, { autohide: true, delay: 4500 }).show();
+        });
+        var b = document.getElementById('backToTop');
+        if (b) {
+            window.addEventListener('scroll', function() { b.classList.toggle('visible', window.scrollY > 500); });
+            b.addEventListener('click', function() { window.scrollTo({ top: 0, behavior: 'smooth' }); });
+        }
+    });
+    </script>
 </body>
 </html>
