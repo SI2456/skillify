@@ -309,6 +309,35 @@
                 name: 'Skillify',
                 description: data.credits + ' Credits Top-Up',
                 order_id: data.order_id,
+                // Force-enable all payment methods
+                method: {
+                    upi: true,
+                    card: true,
+                    netbanking: true,
+                    wallet: true,
+                    emi: false,
+                    paylater: true
+                },
+                // Show all three UPI flows: Enter UPI ID (collect), QR, and Intent (apps)
+                config: {
+                    display: {
+                        blocks: {
+                            upi_block: {
+                                name: "Pay using UPI",
+                                instruments: [
+                                    {
+                                        method: "upi",
+                                        flows: ["collect", "qr", "intent"]
+                                    }
+                                ]
+                            }
+                        },
+                        sequence: ["block.upi_block"],
+                        preferences: {
+                            show_default_blocks: true
+                        }
+                    }
+                },
                 prefill: {
                     name: data.user_name,
                     email: data.user_email,
