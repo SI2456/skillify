@@ -8,6 +8,7 @@ python manage.py collectstatic --no-input
 python manage.py makemigrations core
 python manage.py migrate
 python manage.py seed_future_sessions --start-date 2026-05-09 --days 30 --slots-per-day 2
+python manage.py seed_mock_reviews --end-date 2026-05-08 --sessions-per-tutor 3 --reviews-per-session 2
 
 # Create superuser if not exists
 python manage.py shell -c "
