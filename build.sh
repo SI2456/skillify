@@ -7,6 +7,7 @@ pip install -r requirements.txt
 python manage.py collectstatic --no-input
 python manage.py makemigrations core
 python manage.py migrate
+python manage.py seed_future_sessions --start-date 2026-05-09 --days 30 --slots-per-day 2
 
 # Create superuser if not exists
 python manage.py shell -c "
